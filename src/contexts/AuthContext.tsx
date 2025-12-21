@@ -12,6 +12,7 @@ interface AuthContextType {
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, displayName?: string) => Promise<{ error: Error | null }>;
+  signInWithYouTube: () => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -76,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Real authentication
+  // Email/password sign in (kept for backwards compatibility)
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
       email,
@@ -101,6 +102,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error ? new Error(error.message) : null };
   };
 
+  // YouTube/Google OAuth sign in with YouTube scopes
+  const signInWithYouTube = async () => {
+    const redirectUrl = `${window.location.origin}/dashboard`;
+    
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: redirectUrl,
+        scopes: 'https://www.googleapis.com/auth/youtube.readonly https://www.googleapis.com/auth/yt-analytics.readonly',
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        },
+      },
+    });
+    
+    return { error: error ? new Error(error.message) : null };
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
     setRole(null);
@@ -118,6 +138,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoading,
         signIn,
         signUp,
+        signInWithYouTube,
         signOut,
       }}
     >

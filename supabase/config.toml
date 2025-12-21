@@ -35,3 +35,6 @@ verify_jwt = true
 
 [functions.send-alert-email]
 verify_jwt = true
+
+[functions.onboard-youtube-channel]
+verify_jwt = true
