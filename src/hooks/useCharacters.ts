@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { mockCharacters } from '@/data/mockData';
 
 export interface Character {
   id: string;
@@ -27,22 +26,8 @@ export function useCharacters() {
     queryKey: ['characters', user?.id],
     queryFn: async () => {
       if (isDemoMode) {
-        return mockCharacters.map(c => ({
-          id: c.id,
-          user_id: 'demo-user',
-          name: c.name,
-          role: c.role,
-          personality: c.personality,
-          backstory: c.backstory,
-          appearance: c.appearance,
-          voice_type: c.voiceType || null,
-          voice_accent: c.voiceAccent || null,
-          voice_age: c.voiceAge || null,
-          locked_traits: c.lockedTraits || null,
-          stories_count: c.storiesCount,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })) as Character[];
+        // Return empty array in demo mode - no mock data
+        return [] as Character[];
       }
 
       const { data, error } = await supabase
@@ -64,24 +49,7 @@ export function useCharacter(id: string) {
     queryKey: ['character', id],
     queryFn: async () => {
       if (isDemoMode) {
-        const character = mockCharacters.find(c => c.id === id);
-        if (!character) return null;
-        return {
-          id: character.id,
-          user_id: 'demo-user',
-          name: character.name,
-          role: character.role,
-          personality: character.personality,
-          backstory: character.backstory,
-          appearance: character.appearance,
-          voice_type: character.voiceType || null,
-          voice_accent: character.voiceAccent || null,
-          voice_age: character.voiceAge || null,
-          locked_traits: character.lockedTraits || null,
-          stories_count: character.storiesCount,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        } as Character;
+        return null;
       }
 
       const { data, error } = await supabase

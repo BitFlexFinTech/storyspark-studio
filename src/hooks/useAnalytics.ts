@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { mockAnalytics, aggregatedAnalytics } from '@/data/mockData';
 
 export interface VideoAnalytics {
   id: string;
@@ -27,6 +26,16 @@ export interface AggregatedAnalytics {
   subscriberGrowth: number;
 }
 
+export interface AnalyticsDataPoint {
+  date: string;
+  views: number;
+  watchTime: number;
+  likes: number;
+  comments: number;
+  shares: number;
+  retention: number;
+}
+
 export function useVideoAnalytics(videoId: string) {
   const { isDemoMode } = useAuth();
 
@@ -34,18 +43,7 @@ export function useVideoAnalytics(videoId: string) {
     queryKey: ['video-analytics', videoId],
     queryFn: async () => {
       if (isDemoMode) {
-        return mockAnalytics.map(a => ({
-          id: crypto.randomUUID(),
-          video_id: videoId,
-          date: a.date,
-          views: a.views,
-          watch_time_hours: a.watchTime,
-          likes: a.likes,
-          comments: a.comments,
-          shares: a.shares,
-          retention_rate: a.retention,
-          created_at: new Date().toISOString(),
-        })) as VideoAnalytics[];
+        return [] as VideoAnalytics[];
       }
 
       const { data, error } = await supabase
@@ -68,7 +66,16 @@ export function useAggregatedAnalytics() {
     queryKey: ['aggregated-analytics', user?.id],
     queryFn: async (): Promise<AggregatedAnalytics> => {
       if (isDemoMode) {
-        return aggregatedAnalytics;
+        return {
+          totalViews: 0,
+          totalWatchTime: 0,
+          avgRetention: 0,
+          totalSubscribers: 0,
+          viewsGrowth: 0,
+          watchTimeGrowth: 0,
+          retentionGrowth: 0,
+          subscriberGrowth: 0,
+        };
       }
 
       // Get all videos for the user first
@@ -122,11 +129,11 @@ export function useAggregatedAnalytics() {
         totalViews,
         totalWatchTime,
         avgRetention,
-        totalSubscribers: 0, // Would need subscriber tracking
-        viewsGrowth: 12.5, // Would calculate from historical data
-        watchTimeGrowth: 8.3,
-        retentionGrowth: 2.1,
-        subscriberGrowth: 15.2,
+        totalSubscribers: 0,
+        viewsGrowth: 0,
+        watchTimeGrowth: 0,
+        retentionGrowth: 0,
+        subscriberGrowth: 0,
       };
     },
     enabled: isAuthenticated,
@@ -138,9 +145,9 @@ export function useAnalyticsTimeSeries() {
 
   return useQuery({
     queryKey: ['analytics-time-series', user?.id],
-    queryFn: async () => {
+    queryFn: async (): Promise<AnalyticsDataPoint[]> => {
       if (isDemoMode) {
-        return mockAnalytics;
+        return [];
       }
 
       // Get all videos for the user
@@ -186,10 +193,15 @@ export function useAnalyticsTimeSeries() {
         acc[date].retention += Number(item.retention_rate || 0);
         acc[date].count += 1;
         return acc;
-      }, {} as Record<string, any>);
+      }, {} as Record<string, AnalyticsDataPoint & { count: number }>);
 
-      return Object.values(byDate).map((d: any) => ({
-        ...d,
+      return Object.values(byDate).map((d) => ({
+        date: d.date,
+        views: d.views,
+        watchTime: d.watchTime,
+        likes: d.likes,
+        comments: d.comments,
+        shares: d.shares,
         retention: d.count > 0 ? d.retention / d.count : 0,
       }));
     },

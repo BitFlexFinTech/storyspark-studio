@@ -1,7 +1,7 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Play, Wand2, Users, Video, Palette, ArrowRight } from "lucide-react";
+import { Sparkles, Play, Wand2, Users, Video, Palette, ArrowRight, LogIn } from "lucide-react";
 import { useEffect } from "react";
 
 const Landing = () => {
@@ -14,7 +14,7 @@ const Landing = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  const handleLogin = (role: "user" | "admin") => {
+  const handleDemoLogin = (role: "user" | "admin") => {
     login(role);
     navigate("/dashboard");
   };
@@ -40,11 +40,14 @@ const Landing = () => {
             </span>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="ghost" onClick={() => handleLogin("user")}>
-              User Login
+            <Button variant="ghost" asChild>
+              <Link to="/auth">
+                <LogIn className="mr-2 h-4 w-4" />
+                Sign In
+              </Link>
             </Button>
-            <Button variant="heroOutline" onClick={() => handleLogin("admin")}>
-              Admin Login
+            <Button variant="heroOutline" asChild>
+              <Link to="/auth">Get Started</Link>
             </Button>
           </div>
         </header>
@@ -71,25 +74,25 @@ const Landing = () => {
               <Button
                 variant="hero"
                 size="xl"
-                onClick={() => handleLogin("user")}
-                className="w-full sm:w-auto"
+                asChild
               >
-                <Play className="h-5 w-5" />
-                Enter as User
+                <Link to="/auth">
+                  <Play className="h-5 w-5" />
+                  Get Started
+                </Link>
               </Button>
               <Button
                 variant="heroSecondary"
                 size="xl"
-                onClick={() => handleLogin("admin")}
-                className="w-full sm:w-auto"
+                onClick={() => handleDemoLogin("user")}
               >
                 <Users className="h-5 w-5" />
-                Enter as Admin
+                Try Demo
               </Button>
             </div>
 
             <p className="mt-4 text-sm text-muted-foreground">
-              No signup required — click to explore the studio
+              Free to try — no credit card required
             </p>
           </div>
         </main>
@@ -167,10 +170,10 @@ const Landing = () => {
               <Button
                 variant="glass"
                 size="xl"
-                onClick={() => handleLogin("user")}
+                asChild
                 className="bg-primary-foreground/10 text-primary-foreground hover:bg-primary-foreground/20"
               >
-                Start Creating
+                <Link to="/auth">Start Creating</Link>
               </Button>
             </div>
           </div>
