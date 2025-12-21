@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { mockStories } from '@/data/mockData';
 
 export interface Story {
   id: string;
@@ -22,17 +21,8 @@ export function useStories() {
     queryKey: ['stories', user?.id],
     queryFn: async () => {
       if (isDemoMode) {
-        return mockStories.map(s => ({
-          id: s.id,
-          user_id: 'demo-user',
-          title: s.title,
-          description: s.description,
-          style: s.style,
-          status: s.status,
-          thumbnail_url: s.thumbnail,
-          created_at: s.createdAt,
-          updated_at: s.createdAt,
-        })) as Story[];
+        // Return empty array in demo mode - no mock data
+        return [] as Story[];
       }
 
       const { data, error } = await supabase
@@ -54,20 +44,7 @@ export function useStory(id: string) {
     queryKey: ['story', id],
     queryFn: async () => {
       if (isDemoMode) {
-        const story = mockStories.find(s => s.id === id);
-        if (!story) return null;
-        return {
-          id: story.id,
-          user_id: 'demo-user',
-          title: story.title,
-          description: story.description,
-          style: story.style,
-          status: story.status,
-          thumbnail_url: story.thumbnail,
-          created_at: story.createdAt,
-          updated_at: story.createdAt,
-          scenes: story.scenes,
-        };
+        return null;
       }
 
       const { data, error } = await supabase

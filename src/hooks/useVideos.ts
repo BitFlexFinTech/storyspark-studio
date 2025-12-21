@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { mockStories } from '@/data/mockData';
 
 export interface Video {
   id: string;
@@ -24,25 +23,8 @@ export function useVideos() {
     queryKey: ['videos', user?.id],
     queryFn: async () => {
       if (isDemoMode) {
-        // Convert mock stories to videos for demo
-        return mockStories
-          .filter(s => s.status === 'complete')
-          .map(s => ({
-            id: s.id,
-            story_id: s.id,
-            user_id: 'demo-user',
-            title: s.title,
-            duration: s.scenes.reduce((acc, scene) => {
-              const [mins, secs] = scene.duration.split(':').map(Number);
-              return acc + mins * 60 + secs;
-            }, 0).toString(),
-            status: 'published',
-            thumbnail_url: s.thumbnail,
-            video_url: null,
-            published_at: s.createdAt,
-            created_at: s.createdAt,
-            updated_at: s.createdAt,
-          })) as Video[];
+        // Return empty array in demo mode - no mock data
+        return [] as Video[];
       }
 
       const { data, error } = await supabase
@@ -64,21 +46,7 @@ export function useVideo(id: string) {
     queryKey: ['video', id],
     queryFn: async () => {
       if (isDemoMode) {
-        const story = mockStories.find(s => s.id === id);
-        if (!story) return null;
-        return {
-          id: story.id,
-          story_id: story.id,
-          user_id: 'demo-user',
-          title: story.title,
-          duration: null,
-          status: story.status === 'complete' ? 'published' : 'draft',
-          thumbnail_url: story.thumbnail,
-          video_url: null,
-          published_at: null,
-          created_at: story.createdAt,
-          updated_at: story.createdAt,
-        } as Video;
+        return null;
       }
 
       const { data, error } = await supabase

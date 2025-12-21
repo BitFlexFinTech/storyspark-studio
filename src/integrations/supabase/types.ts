@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      ab_tests: {
+        Row: {
+          ended_at: string | null
+          id: string
+          started_at: string | null
+          test_type: string | null
+          user_id: string
+          variant_a: string | null
+          variant_a_metrics: Json | null
+          variant_b: string | null
+          variant_b_metrics: Json | null
+          video_id: string | null
+          winner: string | null
+        }
+        Insert: {
+          ended_at?: string | null
+          id?: string
+          started_at?: string | null
+          test_type?: string | null
+          user_id: string
+          variant_a?: string | null
+          variant_a_metrics?: Json | null
+          variant_b?: string | null
+          variant_b_metrics?: Json | null
+          video_id?: string | null
+          winner?: string | null
+        }
+        Update: {
+          ended_at?: string | null
+          id?: string
+          started_at?: string | null
+          test_type?: string | null
+          user_id?: string
+          variant_a?: string | null
+          variant_a_metrics?: Json | null
+          variant_b?: string | null
+          variant_b_metrics?: Json | null
+          video_id?: string | null
+          winner?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ab_tests_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       characters: {
         Row: {
           appearance: string | null
@@ -64,6 +114,244 @@ export type Database = {
           voice_type?: string | null
         }
         Relationships: []
+      }
+      competitors: {
+        Row: {
+          avg_views: number | null
+          channel_id: string
+          channel_name: string | null
+          created_at: string | null
+          id: string
+          last_video_date: string | null
+          subscriber_count: number | null
+          user_id: string
+          video_count: number | null
+        }
+        Insert: {
+          avg_views?: number | null
+          channel_id: string
+          channel_name?: string | null
+          created_at?: string | null
+          id?: string
+          last_video_date?: string | null
+          subscriber_count?: number | null
+          user_id: string
+          video_count?: number | null
+        }
+        Update: {
+          avg_views?: number | null
+          channel_id?: string
+          channel_name?: string | null
+          created_at?: string | null
+          id?: string
+          last_video_date?: string | null
+          subscriber_count?: number | null
+          user_id?: string
+          video_count?: number | null
+        }
+        Relationships: []
+      }
+      integration_setup: {
+        Row: {
+          completed: boolean | null
+          created_at: string | null
+          current_step: number | null
+          id: string
+          integration_id: string | null
+          platform: string
+          step_data: Json | null
+          total_steps: number | null
+          user_id: string
+        }
+        Insert: {
+          completed?: boolean | null
+          created_at?: string | null
+          current_step?: number | null
+          id?: string
+          integration_id?: string | null
+          platform: string
+          step_data?: Json | null
+          total_steps?: number | null
+          user_id: string
+        }
+        Update: {
+          completed?: boolean | null
+          created_at?: string | null
+          current_step?: number | null
+          id?: string
+          integration_id?: string | null
+          platform?: string
+          step_data?: Json | null
+          total_steps?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integration_setup_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "integrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      integrations: {
+        Row: {
+          access_token: string | null
+          created_at: string | null
+          id: string
+          metadata: Json | null
+          oauth_state: string | null
+          platform: string
+          refresh_token: string | null
+          status: string | null
+          token_expires_at: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          oauth_state?: string | null
+          platform: string
+          refresh_token?: string | null
+          status?: string | null
+          token_expires_at?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          access_token?: string | null
+          created_at?: string | null
+          id?: string
+          metadata?: Json | null
+          oauth_state?: string | null
+          platform?: string
+          refresh_token?: string | null
+          status?: string | null
+          token_expires_at?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      keywords: {
+        Row: {
+          competition_score: number | null
+          created_at: string | null
+          id: string
+          keyword: string
+          outlier_score: number | null
+          related_keywords: Json | null
+          search_volume: number | null
+          trend_direction: string | null
+          user_id: string
+        }
+        Insert: {
+          competition_score?: number | null
+          created_at?: string | null
+          id?: string
+          keyword: string
+          outlier_score?: number | null
+          related_keywords?: Json | null
+          search_volume?: number | null
+          trend_direction?: string | null
+          user_id: string
+        }
+        Update: {
+          competition_score?: number | null
+          created_at?: string | null
+          id?: string
+          keyword?: string
+          outlier_score?: number | null
+          related_keywords?: Json | null
+          search_volume?: number | null
+          trend_direction?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      optimization_bot_settings: {
+        Row: {
+          auto_apply: boolean | null
+          created_at: string | null
+          id: string
+          is_enabled: boolean | null
+          optimization_types: string[] | null
+          performance_threshold: number | null
+          scan_frequency: string | null
+          user_id: string
+        }
+        Insert: {
+          auto_apply?: boolean | null
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          optimization_types?: string[] | null
+          performance_threshold?: number | null
+          scan_frequency?: string | null
+          user_id: string
+        }
+        Update: {
+          auto_apply?: boolean | null
+          created_at?: string | null
+          id?: string
+          is_enabled?: boolean | null
+          optimization_types?: string[] | null
+          performance_threshold?: number | null
+          scan_frequency?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      optimization_queue: {
+        Row: {
+          created_at: string | null
+          current_value: string | null
+          id: string
+          optimization_type: string | null
+          performance_data: Json | null
+          selected_value: string | null
+          status: string | null
+          suggested_values: Json | null
+          user_id: string
+          video_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_value?: string | null
+          id?: string
+          optimization_type?: string | null
+          performance_data?: Json | null
+          selected_value?: string | null
+          status?: string | null
+          suggested_values?: Json | null
+          user_id: string
+          video_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_value?: string | null
+          id?: string
+          optimization_type?: string | null
+          performance_data?: Json | null
+          selected_value?: string | null
+          status?: string | null
+          suggested_values?: Json | null
+          user_id?: string
+          video_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "optimization_queue_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -214,6 +502,39 @@ export type Database = {
         }
         Relationships: []
       }
+      trend_alerts: {
+        Row: {
+          alert_type: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          keyword: string
+          last_triggered_at: string | null
+          threshold: number | null
+          user_id: string
+        }
+        Insert: {
+          alert_type?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          keyword: string
+          last_triggered_at?: string | null
+          threshold?: number | null
+          user_id: string
+        }
+        Update: {
+          alert_type?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          keyword?: string
+          last_triggered_at?: string | null
+          threshold?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -282,6 +603,50 @@ export type Database = {
           },
         ]
       }
+      video_optimizations: {
+        Row: {
+          created_at: string | null
+          id: string
+          optimization_type: string | null
+          optimized_value: string | null
+          original_value: string | null
+          performance_after: Json | null
+          performance_before: Json | null
+          user_id: string
+          video_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          optimization_type?: string | null
+          optimized_value?: string | null
+          original_value?: string | null
+          performance_after?: Json | null
+          performance_before?: Json | null
+          user_id: string
+          video_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          optimization_type?: string | null
+          optimized_value?: string | null
+          original_value?: string | null
+          performance_after?: Json | null
+          performance_before?: Json | null
+          user_id?: string
+          video_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_optimizations_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       videos: {
         Row: {
           created_at: string
@@ -331,6 +696,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      youtube_channels: {
+        Row: {
+          access_token: string | null
+          channel_id: string
+          channel_name: string
+          channel_url: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          refresh_token: string | null
+          subscriber_count: number | null
+          thumbnail_url: string | null
+          token_expires_at: string | null
+          updated_at: string | null
+          user_id: string
+          video_count: number | null
+        }
+        Insert: {
+          access_token?: string | null
+          channel_id: string
+          channel_name: string
+          channel_url?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          refresh_token?: string | null
+          subscriber_count?: number | null
+          thumbnail_url?: string | null
+          token_expires_at?: string | null
+          updated_at?: string | null
+          user_id: string
+          video_count?: number | null
+        }
+        Update: {
+          access_token?: string | null
+          channel_id?: string
+          channel_name?: string
+          channel_url?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          refresh_token?: string | null
+          subscriber_count?: number | null
+          thumbnail_url?: string | null
+          token_expires_at?: string | null
+          updated_at?: string | null
+          user_id?: string
+          video_count?: number | null
+        }
+        Relationships: []
       }
     }
     Views: {
