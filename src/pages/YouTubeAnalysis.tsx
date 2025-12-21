@@ -163,7 +163,7 @@ const YouTubeAnalysis = () => {
                         <div
                           key={i}
                           className="h-6 w-6 rounded-full border border-border shadow-sm"
-                          style={{ backgroundColor: color }}
+                          style={{ backgroundColor: color.hex }}
                         />
                       ))}
                     </div>
