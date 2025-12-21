@@ -16,7 +16,6 @@ interface IntegrationCardProps {
   description: string;
   icon: LucideIcon;
   status: 'connected' | 'disconnected' | 'error' | 'pending';
-  isAdmin: boolean;
   hasOAuth: boolean;
   onConnect: () => void;
   onManage?: () => void;
@@ -32,7 +31,6 @@ export function IntegrationCard({
   description,
   icon: Icon,
   status,
-  isAdmin,
   hasOAuth,
   onConnect,
   onManage,
@@ -104,36 +102,28 @@ export function IntegrationCard({
           </p>
         )}
         
-        {isAdmin && (
-          <div className="flex gap-2">
-            {isConnected ? (
-              <>
-                {onManage && (
-                  <Button variant="outline" className="flex-1" onClick={onManage}>
-                    <Settings className="mr-2 h-4 w-4" />
-                    Manage
-                  </Button>
-                )}
-                {onDisconnect && (
-                  <Button variant="ghost" size="icon" onClick={onDisconnect} className="text-destructive hover:text-destructive">
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                )}
-              </>
-            ) : (
-              <Button className="w-full" onClick={onConnect} disabled={isPending}>
-                {hasOAuth ? "Connect with OAuth" : "Connect"}
-                <ExternalLink className="ml-2 h-4 w-4" />
-              </Button>
-            )}
-          </div>
-        )}
-        
-        {!isAdmin && (
-          <Badge variant={isConnected ? "approved" : "secondary"} className="w-full justify-center py-2">
-            {isConnected ? "Active" : "Not Available"}
-          </Badge>
-        )}
+        <div className="flex gap-2">
+          {isConnected ? (
+            <>
+              {onManage && (
+                <Button variant="outline" className="flex-1" onClick={onManage}>
+                  <Settings className="mr-2 h-4 w-4" />
+                  Manage
+                </Button>
+              )}
+              {onDisconnect && (
+                <Button variant="ghost" size="icon" onClick={onDisconnect} className="text-destructive hover:text-destructive">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              )}
+            </>
+          ) : (
+            <Button className="w-full" onClick={onConnect} disabled={isPending}>
+              {hasOAuth ? "Connect with OAuth" : "Connect"}
+              <ExternalLink className="ml-2 h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

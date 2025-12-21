@@ -20,16 +20,11 @@ export interface Character {
 }
 
 export function useCharacters() {
-  const { isAuthenticated, isDemoMode, user } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   return useQuery({
     queryKey: ['characters', user?.id],
     queryFn: async () => {
-      if (isDemoMode) {
-        // Return empty array in demo mode - no mock data
-        return [] as Character[];
-      }
-
       const { data, error } = await supabase
         .from('characters')
         .select('*')
@@ -43,15 +38,9 @@ export function useCharacters() {
 }
 
 export function useCharacter(id: string) {
-  const { isDemoMode } = useAuth();
-
   return useQuery({
     queryKey: ['character', id],
     queryFn: async () => {
-      if (isDemoMode) {
-        return null;
-      }
-
       const { data, error } = await supabase
         .from('characters')
         .select('*')

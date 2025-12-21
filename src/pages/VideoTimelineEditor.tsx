@@ -37,14 +37,12 @@ import {
 } from "lucide-react";
 import { useScenes, useReorderScenes, useUpdateScene, Scene } from "@/hooks/useScenes";
 import { useStory } from "@/hooks/useStories";
-import { useAuth } from "@/contexts/AuthContext";
 import { SortableScene } from "@/components/timeline/SortableScene";
 import { toast } from "sonner";
 
 const VideoTimelineEditor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { isDemoMode } = useAuth();
   
   const { data: story, isLoading: storyLoading } = useStory(id || '');
   const { data: dbScenes, isLoading: scenesLoading } = useScenes(id || '');
@@ -113,8 +111,8 @@ const VideoTimelineEditor = () => {
 
       setLocalScenes(newScenes);
 
-      // Persist to database if not in demo mode
-      if (!isDemoMode && id) {
+      // Persist to database
+      if (id) {
         reorderScenes.mutate({
           storyId: id,
           scenes: newScenes.map((s) => ({ id: s.id, number: s.number })),
@@ -138,7 +136,7 @@ const VideoTimelineEditor = () => {
   };
 
   const handleSave = () => {
-    if (!isDemoMode && id) {
+    if (id) {
       // Save all scene updates
       scenes.forEach((scene) => {
         updateScene.mutate({

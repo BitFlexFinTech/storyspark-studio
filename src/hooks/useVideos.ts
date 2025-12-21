@@ -17,16 +17,11 @@ export interface Video {
 }
 
 export function useVideos() {
-  const { isAuthenticated, isDemoMode, user } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   return useQuery({
     queryKey: ['videos', user?.id],
     queryFn: async () => {
-      if (isDemoMode) {
-        // Return empty array in demo mode - no mock data
-        return [] as Video[];
-      }
-
       const { data, error } = await supabase
         .from('videos')
         .select('*')
@@ -40,15 +35,9 @@ export function useVideos() {
 }
 
 export function useVideo(id: string) {
-  const { isDemoMode } = useAuth();
-
   return useQuery({
     queryKey: ['video', id],
     queryFn: async () => {
-      if (isDemoMode) {
-        return null;
-      }
-
       const { data, error } = await supabase
         .from('videos')
         .select('*')

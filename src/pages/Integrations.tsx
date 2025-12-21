@@ -6,7 +6,6 @@ import { YouTubeSetupWizard } from "@/components/integrations/YouTubeSetupWizard
 import { TikTokSetupWizard } from "@/components/integrations/TikTokSetupWizard";
 import { InstagramSetupWizard } from "@/components/integrations/InstagramSetupWizard";
 import { useIntegrations, useDeleteIntegration } from "@/hooks/useIntegrations";
-import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { 
   Youtube, 
@@ -31,8 +30,6 @@ const AVAILABLE_INTEGRATIONS = [
 ];
 
 const Integrations = () => {
-  const { role } = useAuth();
-  const isAdmin = role === "admin";
   const { data: integrations = [], refetch } = useIntegrations();
   const deleteIntegration = useDeleteIntegration();
   
@@ -68,7 +65,7 @@ const Integrations = () => {
     <AppLayout>
       <PageHeader
         title="Integrations"
-        description={isAdmin ? "Connect and manage third-party services to power your content workflow." : "View connected integrations."}
+        description="Connect and manage third-party services to power your content workflow."
       />
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -79,7 +76,6 @@ const Integrations = () => {
             description={integration.description}
             icon={integration.icon}
             status={getIntegrationStatus(integration.id)}
-            isAdmin={isAdmin}
             hasOAuth={integration.hasOAuth}
             onConnect={() => handleConnect(integration.id)}
             onDisconnect={() => handleDisconnect(integration.id)}

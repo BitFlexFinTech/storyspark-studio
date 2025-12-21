@@ -24,6 +24,7 @@ import {
   ImageIcon as ThumbnailIcon,
   Bell,
   Calendar,
+  Settings,
 } from "lucide-react";
 import {
   Sidebar,
@@ -67,6 +68,7 @@ const workflowItems = [
   { title: "Thumbnail Analysis", url: "/thumbnail-analysis", icon: ThumbnailIcon },
   { title: "Notifications", url: "/notifications", icon: Bell },
   { title: "Performance", url: "/performance-comparison", icon: BarChart2 },
+  { title: "Settings", url: "/settings", icon: Settings },
 ];
 
 const adminItems = [
@@ -75,7 +77,7 @@ const adminItems = [
 
 export function AppSidebar() {
   const location = useLocation();
-  const { role, logout } = useAuth();
+  const { role, signOut } = useAuth();
   const { state, toggleSidebar } = useSidebar();
   const collapsed = state === "collapsed";
 
@@ -197,7 +199,7 @@ export function AppSidebar() {
             "w-full justify-start gap-3 text-muted-foreground hover:text-foreground",
             collapsed && "justify-center"
           )}
-          onClick={logout}
+          onClick={signOut}
         >
           <LogOut className="h-5 w-5" />
           {!collapsed && <span>Log Out</span>}

@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Plus, Video, TrendingUp, Users, Eye } from "lucide-react";
+import { Plus, Video, TrendingUp, Users, Eye, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -21,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useCreateCompetitorAlert } from "@/hooks/useCompetitorAlerts";
+import { toast } from "sonner";
 
 interface Competitor {
   id: string;
@@ -75,6 +77,8 @@ export function AddAlertDialog({ competitors }: AddAlertDialogProps) {
   const [selectedCompetitor, setSelectedCompetitor] = useState<string>("");
   const [alertType, setAlertType] = useState<AlertType>("new_video");
   const [threshold, setThreshold] = useState<string>("");
+  const [sendEmail, setSendEmail] = useState(false);
+  const [emailPriority, setEmailPriority] = useState<"normal" | "high">("normal");
 
   const createAlert = useCreateCompetitorAlert();
 
@@ -88,16 +92,28 @@ export function AddAlertDialog({ competitors }: AddAlertDialogProps) {
         competitor_id: selectedCompetitor,
         alert_type: alertType,
         threshold: threshold ? parseInt(threshold) : undefined,
+        send_email: sendEmail,
+        email_priority: emailPriority,
       },
       {
         onSuccess: () => {
+          toast.success("Alert rule created successfully!");
           setOpen(false);
-          setSelectedCompetitor("");
-          setAlertType("new_video");
-          setThreshold("");
+          resetForm();
+        },
+        onError: (error) => {
+          toast.error("Failed to create alert: " + error.message);
         },
       }
     );
+  };
+
+  const resetForm = () => {
+    setSelectedCompetitor("");
+    setAlertType("new_video");
+    setThreshold("");
+    setSendEmail(false);
+    setEmailPriority("normal");
   };
 
   return (
@@ -178,6 +194,55 @@ export function AddAlertDialog({ competitors }: AddAlertDialogProps) {
               />
             </div>
           )}
+
+          {/* Email Notification Settings */}
+          <div className="space-y-4 pt-4 border-t">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Mail className="h-4 w-4 text-muted-foreground" />
+                <Label htmlFor="send-email" className="cursor-pointer">
+                  Email Notifications
+                </Label>
+              </div>
+              <Switch
+                id="send-email"
+                checked={sendEmail}
+                onCheckedChange={setSendEmail}
+              />
+            </div>
+
+            {sendEmail && (
+              <div className="space-y-2 pl-6">
+                <Label>Email Priority</Label>
+                <Select
+                  value={emailPriority}
+                  onValueChange={(v) => setEmailPriority(v as "normal" | "high")}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="normal">
+                      <div className="flex flex-col">
+                        <span>Normal Priority</span>
+                        <span className="text-xs text-muted-foreground">
+                          Included in digest emails
+                        </span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="high">
+                      <div className="flex flex-col">
+                        <span>High Priority</span>
+                        <span className="text-xs text-muted-foreground">
+                          Immediate email notification
+                        </span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
         </div>
 
         <DialogFooter>

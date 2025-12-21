@@ -15,16 +15,11 @@ export interface Story {
 }
 
 export function useStories() {
-  const { isAuthenticated, isDemoMode, user } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   return useQuery({
     queryKey: ['stories', user?.id],
     queryFn: async () => {
-      if (isDemoMode) {
-        // Return empty array in demo mode - no mock data
-        return [] as Story[];
-      }
-
       const { data, error } = await supabase
         .from('stories')
         .select('*')
@@ -38,15 +33,9 @@ export function useStories() {
 }
 
 export function useStory(id: string) {
-  const { isDemoMode } = useAuth();
-
   return useQuery({
     queryKey: ['story', id],
     queryFn: async () => {
-      if (isDemoMode) {
-        return null;
-      }
-
       const { data, error } = await supabase
         .from('stories')
         .select('*')

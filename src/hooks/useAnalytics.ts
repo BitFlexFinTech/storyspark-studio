@@ -37,15 +37,9 @@ export interface AnalyticsDataPoint {
 }
 
 export function useVideoAnalytics(videoId: string) {
-  const { isDemoMode } = useAuth();
-
   return useQuery({
     queryKey: ['video-analytics', videoId],
     queryFn: async () => {
-      if (isDemoMode) {
-        return [] as VideoAnalytics[];
-      }
-
       const { data, error } = await supabase
         .from('video_analytics')
         .select('*')
@@ -60,24 +54,11 @@ export function useVideoAnalytics(videoId: string) {
 }
 
 export function useAggregatedAnalytics() {
-  const { isAuthenticated, isDemoMode, user } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   return useQuery({
     queryKey: ['aggregated-analytics', user?.id],
     queryFn: async (): Promise<AggregatedAnalytics> => {
-      if (isDemoMode) {
-        return {
-          totalViews: 0,
-          totalWatchTime: 0,
-          avgRetention: 0,
-          totalSubscribers: 0,
-          viewsGrowth: 0,
-          watchTimeGrowth: 0,
-          retentionGrowth: 0,
-          subscriberGrowth: 0,
-        };
-      }
-
       // Get all videos for the user first
       const { data: videos, error: videosError } = await supabase
         .from('videos')
@@ -141,15 +122,11 @@ export function useAggregatedAnalytics() {
 }
 
 export function useAnalyticsTimeSeries() {
-  const { isAuthenticated, isDemoMode, user } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   return useQuery({
     queryKey: ['analytics-time-series', user?.id],
     queryFn: async (): Promise<AnalyticsDataPoint[]> => {
-      if (isDemoMode) {
-        return [];
-      }
-
       // Get all videos for the user
       const { data: videos, error: videosError } = await supabase
         .from('videos')

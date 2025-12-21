@@ -32,6 +32,7 @@ import PerformanceComparison from "./pages/PerformanceComparison";
 import ThumbnailAnalysis from "./pages/ThumbnailAnalysis";
 import Notifications from "./pages/Notifications";
 import ContentCalendar from "./pages/ContentCalendar";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -279,7 +280,21 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/settings"
+        element={
+          <ProtectedRoute>
+            <Settings />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/admin-review"
+        element={
+          <AdminRoute>
+            <AdminReview />
+          </AdminRoute>
+        }
+      />
         element={
           <AdminRoute>
             <AdminReview />

@@ -14,7 +14,7 @@ const passwordSchema = z.string().min(6, 'Password must be at least 6 characters
 
 export default function Auth() {
   const navigate = useNavigate();
-  const { isAuthenticated, signIn, signUp, login, isLoading } = useAuth();
+  const { isAuthenticated, signIn, signUp, isLoading } = useAuth();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -86,15 +86,9 @@ export default function Auth() {
         toast.error(error.message);
       }
     } else {
-      toast.success('Account created! You can now sign in.');
+      toast.success('Account created! Welcome to StoryForge.');
       navigate('/dashboard');
     }
-  };
-
-  const handleDemoLogin = (role: 'user' | 'admin') => {
-    login(role);
-    toast.success(`Logged in as demo ${role}`);
-    navigate('/dashboard');
   };
 
   if (isLoading) {
@@ -194,26 +188,6 @@ export default function Auth() {
               </form>
             </TabsContent>
           </Tabs>
-
-          <div className="mt-6 pt-6 border-t">
-            <p className="text-sm text-muted-foreground text-center mb-4">Or try the demo</p>
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                className="flex-1"
-                onClick={() => handleDemoLogin('user')}
-              >
-                Demo User
-              </Button>
-              <Button 
-                variant="outline" 
-                className="flex-1"
-                onClick={() => handleDemoLogin('admin')}
-              >
-                Demo Admin
-              </Button>
-            </div>
-          </div>
         </CardContent>
       </Card>
     </div>
