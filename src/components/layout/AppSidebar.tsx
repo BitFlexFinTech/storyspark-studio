@@ -17,6 +17,8 @@ import {
   Sparkles,
   ChevronLeft,
   BarChart3,
+  Search,
+  Tv,
 } from "lucide-react";
 import {
   Sidebar,
@@ -52,6 +54,8 @@ const workflowItems = [
   { title: "Publishing", url: "/publishing", icon: Upload },
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
   { title: "Integrations", url: "/integrations", icon: Plug },
+  { title: "YouTube Channels", url: "/youtube-channels", icon: Tv },
+  { title: "Keyword Research", url: "/keyword-research", icon: Search },
 ];
 
 const adminItems = [
