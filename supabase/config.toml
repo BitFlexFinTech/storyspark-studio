@@ -38,3 +38,12 @@ verify_jwt = true
 
 [functions.onboard-youtube-channel]
 verify_jwt = true
+
+[functions.analyze-user-thumbnails]
+verify_jwt = true
+
+[functions.analyze-audience-times]
+verify_jwt = true
+
+[functions.sync-competitor-videos]
+verify_jwt = true

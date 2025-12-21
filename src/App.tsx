@@ -33,6 +33,7 @@ import ThumbnailAnalysis from "./pages/ThumbnailAnalysis";
 import Notifications from "./pages/Notifications";
 import ContentCalendar from "./pages/ContentCalendar";
 import Settings from "./pages/Settings";
+import CompetitorVideoAnalysis from "./pages/CompetitorVideoAnalysis";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -288,7 +289,22 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/competitor-videos"
+        element={
+          <ProtectedRoute>
+            <CompetitorVideoAnalysis />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/admin-review"
+        element={
+          <AdminRoute>
+            <AdminReview />
+          </AdminRoute>
+        }
+      />
+      <Route path="*" element={<NotFound />} />
         element={
           <AdminRoute>
             <AdminReview />

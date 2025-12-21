@@ -159,6 +159,59 @@ export type Database = {
           },
         ]
       }
+      competitor_videos: {
+        Row: {
+          comments: number | null
+          competitor_id: string
+          duration_seconds: number | null
+          first_seen_at: string | null
+          id: string
+          last_updated_at: string | null
+          likes: number | null
+          published_at: string | null
+          thumbnail_url: string | null
+          title: string
+          views: number | null
+          youtube_video_id: string
+        }
+        Insert: {
+          comments?: number | null
+          competitor_id: string
+          duration_seconds?: number | null
+          first_seen_at?: string | null
+          id?: string
+          last_updated_at?: string | null
+          likes?: number | null
+          published_at?: string | null
+          thumbnail_url?: string | null
+          title: string
+          views?: number | null
+          youtube_video_id: string
+        }
+        Update: {
+          comments?: number | null
+          competitor_id?: string
+          duration_seconds?: number | null
+          first_seen_at?: string | null
+          id?: string
+          last_updated_at?: string | null
+          likes?: number | null
+          published_at?: string | null
+          thumbnail_url?: string | null
+          title?: string
+          views?: number | null
+          youtube_video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "competitor_videos_competitor_id_fkey"
+            columns: ["competitor_id"]
+            isOneToOne: false
+            referencedRelation: "competitors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       competitors: {
         Row: {
           avg_views: number | null

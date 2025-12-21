@@ -65,6 +65,7 @@ const workflowItems = [
   { title: "Keyword Research", url: "/keyword-research", icon: Search },
   { title: "Competitors", url: "/competitors", icon: Users },
   { title: "Competitor Insights", url: "/competitor-insights", icon: Lightbulb },
+  { title: "Competitor Videos", url: "/competitor-videos", icon: Video },
   { title: "Thumbnail Analysis", url: "/thumbnail-analysis", icon: ThumbnailIcon },
   { title: "Notifications", url: "/notifications", icon: Bell },
   { title: "Performance", url: "/performance-comparison", icon: BarChart2 },
