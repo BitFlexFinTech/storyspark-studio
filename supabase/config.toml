@@ -14,3 +14,12 @@ verify_jwt = true
 
 [functions.keyword-research]
 verify_jwt = true
+
+[functions.fetch-youtube-channel]
+verify_jwt = true
+
+[functions.competitor-insights]
+verify_jwt = true
+
+[functions.fetch-competitor-videos]
+verify_jwt = true
