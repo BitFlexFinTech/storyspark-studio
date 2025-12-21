@@ -21,6 +21,9 @@ import {
   BarChart3,
   Search,
   Tv,
+  ImageIcon as ThumbnailIcon,
+  Bell,
+  Calendar,
 } from "lucide-react";
 import {
   Sidebar,
@@ -55,11 +58,14 @@ const workflowItems = [
   { title: "Drafts", url: "/drafts", icon: FileText },
   { title: "Publishing", url: "/publishing", icon: Upload },
   { title: "Analytics", url: "/analytics", icon: BarChart3 },
+  { title: "Content Calendar", url: "/content-calendar", icon: Calendar },
   { title: "Integrations", url: "/integrations", icon: Plug },
   { title: "YouTube Channels", url: "/youtube-channels", icon: Tv },
   { title: "Keyword Research", url: "/keyword-research", icon: Search },
   { title: "Competitors", url: "/competitors", icon: Users },
   { title: "Competitor Insights", url: "/competitor-insights", icon: Lightbulb },
+  { title: "Thumbnail Analysis", url: "/thumbnail-analysis", icon: ThumbnailIcon },
+  { title: "Notifications", url: "/notifications", icon: Bell },
   { title: "Performance", url: "/performance-comparison", icon: BarChart2 },
 ];
 

@@ -29,6 +29,9 @@ import KeywordResearch from "./pages/KeywordResearch";
 import CompetitorTracking from "./pages/CompetitorTracking";
 import CompetitorInsights from "./pages/CompetitorInsights";
 import PerformanceComparison from "./pages/PerformanceComparison";
+import ThumbnailAnalysis from "./pages/ThumbnailAnalysis";
+import Notifications from "./pages/Notifications";
+import ContentCalendar from "./pages/ContentCalendar";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -248,6 +251,30 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <PerformanceComparison />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/thumbnail-analysis"
+        element={
+          <ProtectedRoute>
+            <ThumbnailAnalysis />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/notifications"
+        element={
+          <ProtectedRoute>
+            <Notifications />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/content-calendar"
+        element={
+          <ProtectedRoute>
+            <ContentCalendar />
           </ProtectedRoute>
         }
       />
