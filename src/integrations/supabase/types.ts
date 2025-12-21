@@ -120,8 +120,10 @@ export type Database = {
           alert_type: string
           competitor_id: string | null
           created_at: string | null
+          email_priority: string | null
           id: string
           is_active: boolean | null
+          send_email: boolean | null
           threshold: number | null
           user_id: string
         }
@@ -129,8 +131,10 @@ export type Database = {
           alert_type: string
           competitor_id?: string | null
           created_at?: string | null
+          email_priority?: string | null
           id?: string
           is_active?: boolean | null
+          send_email?: boolean | null
           threshold?: number | null
           user_id: string
         }
@@ -138,8 +142,10 @@ export type Database = {
           alert_type?: string
           competitor_id?: string | null
           created_at?: string | null
+          email_priority?: string | null
           id?: string
           is_active?: boolean | null
+          send_email?: boolean | null
           threshold?: number | null
           user_id?: string
         }

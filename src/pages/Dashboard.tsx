@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { dashboardStats, mockDrafts, mockStories } from "@/data/mockData";
 import { Link } from "react-router-dom";
+import { CompetitorActivityWidget } from "@/components/dashboard/CompetitorActivityWidget";
 
 const Dashboard = () => {
   const { role } = useAuth();
@@ -89,7 +90,7 @@ const Dashboard = () => {
       </div>
 
       {/* Content Grid */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle className="flex items-center gap-2">
@@ -139,6 +140,9 @@ const Dashboard = () => {
             ))}
           </CardContent>
         </Card>
+
+        {/* Competitor Activity Widget */}
+        <CompetitorActivityWidget />
       </div>
 
       {/* Quick Actions */}

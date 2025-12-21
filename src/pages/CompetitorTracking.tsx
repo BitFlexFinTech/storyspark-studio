@@ -35,8 +35,12 @@ import {
   Eye,
   Video,
   Search,
+  Bell,
 } from "lucide-react";
 import { useCompetitors, useAddCompetitor, useRemoveCompetitor, useRefreshCompetitor } from "@/hooks/useCompetitors";
+import { useCompetitorAlerts } from "@/hooks/useCompetitorAlerts";
+import { AlertRuleCard } from "@/components/competitors/AlertRuleCard";
+import { AddAlertDialog } from "@/components/competitors/AddAlertDialog";
 import { formatDistanceToNow } from "date-fns";
 
 export default function CompetitorTracking() {
@@ -44,9 +48,16 @@ export default function CompetitorTracking() {
   const [searchFilter, setSearchFilter] = useState("");
   
   const { data: competitors, isLoading } = useCompetitors();
+  const { data: alerts, isLoading: alertsLoading } = useCompetitorAlerts();
   const addCompetitor = useAddCompetitor();
   const removeCompetitor = useRemoveCompetitor();
   const refreshCompetitor = useRefreshCompetitor();
+
+  // Map alerts with competitor names
+  const alertsWithNames = alerts?.map((alert) => ({
+    ...alert,
+    competitor_name: competitors?.find((c) => c.id === alert.competitor_id)?.channel_name,
+  })) || [];
 
   const handleAddCompetitor = () => {
     if (!channelInput.trim()) return;
@@ -291,6 +302,45 @@ export default function CompetitorTracking() {
                   ))}
                 </TableBody>
               </Table>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Alert Rules Section */}
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Bell className="h-5 w-5" />
+                  Notification Alerts
+                </CardTitle>
+                <CardDescription>
+                  Get notified when competitors upload videos or hit milestones
+                </CardDescription>
+              </div>
+              <AddAlertDialog competitors={competitors || []} />
+            </div>
+          </CardHeader>
+          <CardContent>
+            {alertsLoading ? (
+              <div className="space-y-3">
+                {[1, 2].map((i) => (
+                  <Skeleton key={i} className="h-20 w-full" />
+                ))}
+              </div>
+            ) : alertsWithNames.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                <Bell className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p className="text-lg font-medium">No alert rules configured</p>
+                <p className="text-sm">Create an alert to get notified about competitor activity</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {alertsWithNames.map((alert) => (
+                  <AlertRuleCard key={alert.id} alert={alert} />
+                ))}
+              </div>
             )}
           </CardContent>
         </Card>
