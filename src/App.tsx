@@ -34,6 +34,8 @@ import Notifications from "./pages/Notifications";
 import ContentCalendar from "./pages/ContentCalendar";
 import Settings from "./pages/Settings";
 import CompetitorVideoAnalysis from "./pages/CompetitorVideoAnalysis";
+import CompetitorAlerts from "./pages/CompetitorAlerts";
+import ShortsAnalyzer from "./pages/ShortsAnalyzer";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -305,13 +307,22 @@ function AppRoutes() {
         }
       />
       <Route path="*" element={<NotFound />} />
+      <Route
+        path="/alerts"
         element={
-          <AdminRoute>
-            <AdminReview />
-          </AdminRoute>
+          <ProtectedRoute>
+            <CompetitorAlerts />
+          </ProtectedRoute>
         }
       />
-      <Route path="*" element={<NotFound />} />
+      <Route
+        path="/shorts-analyzer"
+        element={
+          <ProtectedRoute>
+            <ShortsAnalyzer />
+          </ProtectedRoute>
+        }
+      />
     </Routes>
   );
 }
