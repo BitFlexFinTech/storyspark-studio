@@ -295,12 +295,6 @@ function AppRoutes() {
           </AdminRoute>
         }
       />
-        element={
-          <AdminRoute>
-            <AdminReview />
-          </AdminRoute>
-        }
-      />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
