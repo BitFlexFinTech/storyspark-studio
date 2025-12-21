@@ -10,8 +10,10 @@ import YouTubeAnalysis from "./pages/YouTubeAnalysis";
 import Stories from "./pages/Stories";
 import StoryDetail from "./pages/StoryDetail";
 import Characters from "./pages/Characters";
+import CharacterEditor from "./pages/CharacterEditor";
 import Visuals from "./pages/Visuals";
 import Videos from "./pages/Videos";
+import VideoTimelineEditor from "./pages/VideoTimelineEditor";
 import Thumbnails from "./pages/Thumbnails";
 import Playlists from "./pages/Playlists";
 import Merch from "./pages/Merch";
@@ -19,6 +21,8 @@ import Drafts from "./pages/Drafts";
 import Publishing from "./pages/Publishing";
 import Integrations from "./pages/Integrations";
 import AdminReview from "./pages/AdminReview";
+import Analytics from "./pages/Analytics";
+import StyleBlueprintDetail from "./pages/StyleBlueprintDetail";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -63,6 +67,14 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/style-blueprint/:id"
+        element={
+          <ProtectedRoute>
+            <StyleBlueprintDetail />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/stories"
         element={
           <ProtectedRoute>
@@ -87,6 +99,14 @@ function AppRoutes() {
         }
       />
       <Route
+        path="/characters/:id/edit"
+        element={
+          <ProtectedRoute>
+            <CharacterEditor />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/visuals"
         element={
           <ProtectedRoute>
@@ -99,6 +119,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Videos />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/videos/:id/edit"
+        element={
+          <ProtectedRoute>
+            <VideoTimelineEditor />
           </ProtectedRoute>
         }
       />
@@ -147,6 +175,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Integrations />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/analytics"
+        element={
+          <ProtectedRoute>
+            <Analytics />
           </ProtectedRoute>
         }
       />

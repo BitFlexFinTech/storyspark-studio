@@ -20,6 +20,7 @@ export interface Scene {
   script: string;
   duration: string;
   visualDescription: string;
+  audioWaveform?: number[];
 }
 
 export interface Version {
@@ -35,6 +36,9 @@ export interface Character {
   avatar: string;
   personality: string;
   voiceStyle: string;
+  voiceType: 'warm' | 'energetic' | 'calm' | 'playful';
+  voiceAccent: string;
+  voiceAge: number;
   traits: string[];
   lockedTraits: string[];
   stories: string[];
@@ -104,8 +108,10 @@ export interface Integration {
 
 export interface StyleBlueprint {
   id: string;
+  name: string;
+  sourceUrl?: string;
   visualStyle: {
-    colorPalette: string[];
+    colorPalette: { hex: string; name: string }[];
     animationStyle: string;
     characterDesign: string;
   };
@@ -119,9 +125,39 @@ export interface StyleBlueprint {
     voiceType: string;
     soundEffects: string;
   };
+  typography: {
+    headingFont: string;
+    bodyFont: string;
+    samples: { name: string; size: string; weight: string }[];
+  };
+  animations: {
+    name: string;
+    type: 'fade' | 'slide' | 'scale' | 'bounce';
+    duration: string;
+    cssClass: string;
+  }[];
+  moodBoard: string[];
 }
 
-// Mock Stories
+export interface AnalyticsData {
+  date: string;
+  views: number;
+  likes: number;
+  comments: number;
+  shares: number;
+  watchTime: number;
+}
+
+export interface VideoAnalytics {
+  videoId: string;
+  title: string;
+  totalViews: number;
+  avgWatchTime: string;
+  engagementRate: number;
+  data: AnalyticsData[];
+}
+
+// Mock Stories with audio waveform data
 export const mockStories: Story[] = [
   {
     id: '1',
@@ -133,9 +169,9 @@ export const mockStories: Story[] = [
     updatedAt: '2024-01-20',
     replicationScore: 94,
     scenes: [
-      { id: 's1', number: 1, title: 'The Wishing Star', script: 'Luna gazes up at the night sky, her eyes sparkling with wonder. She spots a shooting star and makes a wish...', duration: '2:30', visualDescription: 'Night sky with twinkling stars, soft purple and blue hues' },
-      { id: 's2', number: 2, title: 'The Magic Telescope', script: 'In her cozy treehouse, Luna discovers an old telescope that belonged to her grandmother...', duration: '3:15', visualDescription: 'Warm interior lighting, vintage telescope, floating dust particles' },
-      { id: 's3', number: 3, title: 'Journey Begins', script: 'With a flash of starlight, Luna finds herself floating among the constellations...', duration: '2:45', visualDescription: 'Deep space environment, glowing constellations forming animal shapes' },
+      { id: 's1', number: 1, title: 'The Wishing Star', script: 'Luna gazes up at the night sky, her eyes sparkling with wonder. She spots a shooting star and makes a wish...', duration: '2:30', visualDescription: 'Night sky with twinkling stars, soft purple and blue hues', audioWaveform: [0.2, 0.4, 0.6, 0.8, 0.5, 0.3, 0.7, 0.9, 0.4, 0.6, 0.8, 0.3, 0.5, 0.7, 0.4, 0.6, 0.9, 0.5, 0.3, 0.7] },
+      { id: 's2', number: 2, title: 'The Magic Telescope', script: 'In her cozy treehouse, Luna discovers an old telescope that belonged to her grandmother...', duration: '3:15', visualDescription: 'Warm interior lighting, vintage telescope, floating dust particles', audioWaveform: [0.3, 0.5, 0.4, 0.7, 0.6, 0.8, 0.5, 0.4, 0.7, 0.9, 0.6, 0.4, 0.8, 0.5, 0.3, 0.7, 0.6, 0.4, 0.5, 0.8] },
+      { id: 's3', number: 3, title: 'Journey Begins', script: 'With a flash of starlight, Luna finds herself floating among the constellations...', duration: '2:45', visualDescription: 'Deep space environment, glowing constellations forming animal shapes', audioWaveform: [0.4, 0.6, 0.8, 0.9, 0.7, 0.5, 0.8, 0.6, 0.4, 0.7, 0.9, 0.5, 0.6, 0.8, 0.4, 0.3, 0.7, 0.5, 0.8, 0.6] },
     ],
     versions: [
       { id: 'v1', number: 1, createdAt: '2024-01-15', changes: 'Initial draft' },
@@ -153,8 +189,8 @@ export const mockStories: Story[] = [
     updatedAt: '2024-01-25',
     replicationScore: 87,
     scenes: [
-      { id: 's1', number: 1, title: 'The Map Fragment', script: 'Captain Coral discovers a mysterious piece of an ancient map washed ashore...', duration: '2:15', visualDescription: 'Sandy beach at sunset, weathered parchment with golden light' },
-      { id: 's2', number: 2, title: 'Submarine Launch', script: 'With her trusty submarine, the SeaStar, Coral prepares for the deep dive...', duration: '2:45', visualDescription: 'Colorful coral reef, bubble effects, friendly sea creatures' },
+      { id: 's1', number: 1, title: 'The Map Fragment', script: 'Captain Coral discovers a mysterious piece of an ancient map washed ashore...', duration: '2:15', visualDescription: 'Sandy beach at sunset, weathered parchment with golden light', audioWaveform: [0.5, 0.3, 0.7, 0.4, 0.8, 0.6, 0.4, 0.9, 0.5, 0.7, 0.3, 0.8, 0.6, 0.4, 0.7, 0.5, 0.9, 0.3, 0.6, 0.8] },
+      { id: 's2', number: 2, title: 'Submarine Launch', script: 'With her trusty submarine, the SeaStar, Coral prepares for the deep dive...', duration: '2:45', visualDescription: 'Colorful coral reef, bubble effects, friendly sea creatures', audioWaveform: [0.6, 0.4, 0.8, 0.5, 0.7, 0.3, 0.9, 0.6, 0.4, 0.8, 0.5, 0.7, 0.3, 0.6, 0.9, 0.4, 0.7, 0.5, 0.8, 0.3] },
     ],
     versions: [
       { id: 'v1', number: 1, createdAt: '2024-01-22', changes: 'Initial concept' },
@@ -171,7 +207,7 @@ export const mockStories: Story[] = [
     updatedAt: '2024-01-28',
     replicationScore: 72,
     scenes: [
-      { id: 's1', number: 1, title: 'Factory Born', script: 'In a factory of gray robots, one unique unit powers on with colors flickering across its screen...', duration: '2:00', visualDescription: 'Industrial setting with one colorful element standing out' },
+      { id: 's1', number: 1, title: 'Factory Born', script: 'In a factory of gray robots, one unique unit powers on with colors flickering across its screen...', duration: '2:00', visualDescription: 'Industrial setting with one colorful element standing out', audioWaveform: [0.4, 0.7, 0.5, 0.8, 0.3, 0.6, 0.9, 0.4, 0.7, 0.5, 0.8, 0.3, 0.6, 0.4, 0.9, 0.5, 0.7, 0.3, 0.8, 0.6] },
     ],
     versions: [
       { id: 'v1', number: 1, createdAt: '2024-01-28', changes: 'First draft' },
@@ -187,9 +223,9 @@ export const mockStories: Story[] = [
     updatedAt: '2024-01-24',
     replicationScore: 91,
     scenes: [
-      { id: 's1', number: 1, title: 'The Missing Cookies', script: 'Mrs. Hedgehog\'s famous cookies have vanished! Whiskers adjusts his tiny detective hat...', duration: '2:30', visualDescription: 'Cozy cottage kitchen, warm autumn colors, magnifying glass effect' },
-      { id: 's2', number: 2, title: 'Gathering Clues', script: 'Whiskers interviews the woodland neighbors, each with their own alibi...', duration: '3:00', visualDescription: 'Village setting with various animal characters, detective notebook' },
-      { id: 's3', number: 3, title: 'The Sweet Truth', script: 'Following paw prints and crumbs, Whiskers discovers the surprising cookie culprit...', duration: '2:45', visualDescription: 'Trail of clues leading to heartwarming revelation' },
+      { id: 's1', number: 1, title: 'The Missing Cookies', script: 'Mrs. Hedgehog\'s famous cookies have vanished! Whiskers adjusts his tiny detective hat...', duration: '2:30', visualDescription: 'Cozy cottage kitchen, warm autumn colors, magnifying glass effect', audioWaveform: [0.3, 0.6, 0.4, 0.8, 0.5, 0.7, 0.3, 0.9, 0.6, 0.4, 0.8, 0.5, 0.7, 0.3, 0.6, 0.9, 0.4, 0.8, 0.5, 0.7] },
+      { id: 's2', number: 2, title: 'Gathering Clues', script: 'Whiskers interviews the woodland neighbors, each with their own alibi...', duration: '3:00', visualDescription: 'Village setting with various animal characters, detective notebook', audioWaveform: [0.5, 0.7, 0.4, 0.8, 0.6, 0.3, 0.9, 0.5, 0.7, 0.4, 0.8, 0.6, 0.3, 0.5, 0.9, 0.7, 0.4, 0.8, 0.6, 0.3] },
+      { id: 's3', number: 3, title: 'The Sweet Truth', script: 'Following paw prints and crumbs, Whiskers discovers the surprising cookie culprit...', duration: '2:45', visualDescription: 'Trail of clues leading to heartwarming revelation', audioWaveform: [0.7, 0.4, 0.8, 0.5, 0.9, 0.3, 0.6, 0.8, 0.4, 0.7, 0.5, 0.9, 0.3, 0.6, 0.8, 0.4, 0.7, 0.5, 0.9, 0.3] },
     ],
     versions: [
       { id: 'v1', number: 1, createdAt: '2024-01-10', changes: 'Initial mystery outline' },
@@ -199,7 +235,7 @@ export const mockStories: Story[] = [
   },
 ];
 
-// Mock Characters
+// Mock Characters with extended voice data
 export const mockCharacters: Character[] = [
   {
     id: '1',
@@ -207,6 +243,9 @@ export const mockCharacters: Character[] = [
     avatar: 'https://images.unsplash.com/photo-1474511320723-9a56873571b7?w=200&h=200&fit=crop',
     personality: 'Curious, brave, dreamy, optimistic',
     voiceStyle: 'Soft, wonder-filled, young',
+    voiceType: 'warm',
+    voiceAccent: 'American',
+    voiceAge: 8,
     traits: ['Adventurous', 'Kind-hearted', 'Creative'],
     lockedTraits: ['Purple fur', 'Star-shaped marking', 'Fluffy tail'],
     stories: ['1'],
@@ -217,6 +256,9 @@ export const mockCharacters: Character[] = [
     avatar: 'https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=200&h=200&fit=crop',
     personality: 'Bold, resourceful, caring, determined',
     voiceStyle: 'Confident, warm, nautical accent',
+    voiceType: 'energetic',
+    voiceAccent: 'British',
+    voiceAge: 12,
     traits: ['Leadership', 'Problem-solver', 'Nature-lover'],
     lockedTraits: ['Teal scales', 'Captain hat', 'Coral jewelry'],
     stories: ['2'],
@@ -227,6 +269,9 @@ export const mockCharacters: Character[] = [
     avatar: 'https://images.unsplash.com/photo-1573865526739-10659fec78a5?w=200&h=200&fit=crop',
     personality: 'Clever, patient, observant, gentle',
     voiceStyle: 'Thoughtful, British accent, distinguished',
+    voiceType: 'calm',
+    voiceAccent: 'British',
+    voiceAge: 45,
     traits: ['Analytical', 'Empathetic', 'Wise'],
     lockedTraits: ['Tabby pattern', 'Detective hat', 'Monocle'],
     stories: ['4'],
@@ -237,6 +282,9 @@ export const mockCharacters: Character[] = [
     avatar: 'https://images.unsplash.com/photo-1546776310-eef45dd6d63c?w=200&h=200&fit=crop',
     personality: 'Innocent, learning, joyful, expressive',
     voiceStyle: 'Slightly robotic but warm, child-like',
+    voiceType: 'playful',
+    voiceAccent: 'Neutral',
+    voiceAge: 6,
     traits: ['Curious', 'Honest', 'Colorful'],
     lockedTraits: ['LED face display', 'Color-changing panels', 'Antenna'],
     stories: ['3'],
@@ -365,11 +413,20 @@ export const mockIntegrations: Integration[] = [
   { id: '6', name: 'Shopify', icon: 'ShoppingBag', status: 'disconnected', description: 'E-commerce storefront' },
 ];
 
-// Mock Style Blueprint
+// Extended Mock Style Blueprint
 export const mockStyleBlueprint: StyleBlueprint = {
   id: '1',
+  name: 'Luna\'s Magical Universe',
+  sourceUrl: 'https://youtube.com/channel/example',
   visualStyle: {
-    colorPalette: ['#FF6B6B', '#4ECDC4', '#FFE66D', '#95E1D3', '#F38181'],
+    colorPalette: [
+      { hex: '#FF6B6B', name: 'Coral Dream' },
+      { hex: '#4ECDC4', name: 'Ocean Teal' },
+      { hex: '#FFE66D', name: 'Sunshine Gold' },
+      { hex: '#95E1D3', name: 'Mint Fresh' },
+      { hex: '#F38181', name: 'Rose Blush' },
+      { hex: '#AA96DA', name: 'Lavender Mist' },
+    ],
     animationStyle: '2D Flat with depth layers',
     characterDesign: 'Rounded, friendly, expressive eyes',
   },
@@ -383,7 +440,69 @@ export const mockStyleBlueprint: StyleBlueprint = {
     voiceType: 'Warm, expressive narrator',
     soundEffects: 'Soft, magical, nature-inspired',
   },
+  typography: {
+    headingFont: 'Quicksand',
+    bodyFont: 'Nunito',
+    samples: [
+      { name: 'Display', size: '48px', weight: '700' },
+      { name: 'H1', size: '36px', weight: '700' },
+      { name: 'H2', size: '28px', weight: '600' },
+      { name: 'H3', size: '22px', weight: '600' },
+      { name: 'Body', size: '16px', weight: '400' },
+      { name: 'Caption', size: '14px', weight: '400' },
+    ],
+  },
+  animations: [
+    { name: 'Fade In', type: 'fade', duration: '0.4s', cssClass: 'animate-fade-in' },
+    { name: 'Slide Right', type: 'slide', duration: '0.3s', cssClass: 'animate-slide-in-right' },
+    { name: 'Scale Up', type: 'scale', duration: '0.2s', cssClass: 'animate-scale-in' },
+    { name: 'Gentle Bounce', type: 'bounce', duration: '2s', cssClass: 'animate-bounce-gentle' },
+  ],
+  moodBoard: [
+    'https://images.unsplash.com/photo-1614732414444-096e5f1122d5?w=300&h=200&fit=crop',
+    'https://images.unsplash.com/photo-1534796636912-3b95b3ab5986?w=300&h=200&fit=crop',
+    'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?w=300&h=200&fit=crop',
+    'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?w=300&h=200&fit=crop',
+  ],
 };
+
+// Mock Analytics Data
+export const mockAnalytics: VideoAnalytics[] = [
+  {
+    videoId: '1',
+    title: 'Luna\'s Starlight Journey - Episode 1',
+    totalViews: 125000,
+    avgWatchTime: '6:45',
+    engagementRate: 8.2,
+    data: [
+      { date: '2024-01-15', views: 5000, likes: 450, comments: 120, shares: 80, watchTime: 6.5 },
+      { date: '2024-01-16', views: 8000, likes: 720, comments: 180, shares: 120, watchTime: 6.8 },
+      { date: '2024-01-17', views: 12000, likes: 1100, comments: 280, shares: 180, watchTime: 7.0 },
+      { date: '2024-01-18', views: 15000, likes: 1350, comments: 340, shares: 220, watchTime: 6.7 },
+      { date: '2024-01-19', views: 18000, likes: 1620, comments: 420, shares: 280, watchTime: 6.9 },
+      { date: '2024-01-20', views: 22000, likes: 1980, comments: 520, shares: 350, watchTime: 7.1 },
+      { date: '2024-01-21', views: 25000, likes: 2250, comments: 600, shares: 400, watchTime: 6.8 },
+      { date: '2024-01-22', views: 20000, likes: 1800, comments: 480, shares: 320, watchTime: 6.6 },
+    ],
+  },
+  {
+    videoId: '4',
+    title: 'Whiskers Solves the Case',
+    totalViews: 89000,
+    avgWatchTime: '7:20',
+    engagementRate: 9.1,
+    data: [
+      { date: '2024-01-15', views: 3500, likes: 350, comments: 90, shares: 60, watchTime: 7.2 },
+      { date: '2024-01-16', views: 5500, likes: 550, comments: 140, shares: 95, watchTime: 7.4 },
+      { date: '2024-01-17', views: 8500, likes: 850, comments: 220, shares: 145, watchTime: 7.5 },
+      { date: '2024-01-18', views: 12000, likes: 1200, comments: 310, shares: 200, watchTime: 7.3 },
+      { date: '2024-01-19', views: 15500, likes: 1550, comments: 400, shares: 260, watchTime: 7.6 },
+      { date: '2024-01-20', views: 18000, likes: 1800, comments: 470, shares: 300, watchTime: 7.4 },
+      { date: '2024-01-21', views: 16000, likes: 1600, comments: 415, shares: 270, watchTime: 7.2 },
+      { date: '2024-01-22', views: 10000, likes: 1000, comments: 260, shares: 170, watchTime: 7.0 },
+    ],
+  },
+];
 
 // Dashboard Stats
 export const dashboardStats = {
@@ -398,5 +517,30 @@ export const dashboardStats = {
     systemHealth: 98,
     activeUsers: 24,
     contentGenerated: 156,
+  },
+};
+
+// Aggregated Analytics
+export const aggregatedAnalytics = {
+  totalViews: 524000,
+  totalSubscribers: 12500,
+  subscriberGrowth: 8.5,
+  avgWatchTime: '6:52',
+  engagementRate: 7.8,
+  topContent: mockAnalytics,
+  demographics: {
+    ageGroups: [
+      { name: '3-5 years', value: 35 },
+      { name: '6-8 years', value: 42 },
+      { name: '9-12 years', value: 18 },
+      { name: 'Parents', value: 5 },
+    ],
+    countries: [
+      { name: 'United States', value: 45 },
+      { name: 'United Kingdom', value: 18 },
+      { name: 'Canada', value: 12 },
+      { name: 'Australia', value: 8 },
+      { name: 'Other', value: 17 },
+    ],
   },
 };

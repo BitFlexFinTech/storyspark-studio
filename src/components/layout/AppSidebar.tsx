@@ -16,6 +16,7 @@ import {
   LogOut,
   Sparkles,
   ChevronLeft,
+  BarChart3,
 } from "lucide-react";
 import {
   Sidebar,
@@ -49,6 +50,7 @@ const userMenuItems = [
 const workflowItems = [
   { title: "Drafts", url: "/drafts", icon: FileText },
   { title: "Publishing", url: "/publishing", icon: Upload },
+  { title: "Analytics", url: "/analytics", icon: BarChart3 },
   { title: "Integrations", url: "/integrations", icon: Plug },
 ];
 
@@ -62,7 +64,7 @@ export function AppSidebar() {
   const { state, toggleSidebar } = useSidebar();
   const collapsed = state === "collapsed";
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + "/");
 
   const MenuItem = ({ item }: { item: typeof userMenuItems[0] }) => (
     <SidebarMenuItem>
