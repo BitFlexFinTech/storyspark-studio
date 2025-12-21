@@ -2,25 +2,178 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import Index from "./pages/Index";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import Landing from "./pages/Landing";
+import Dashboard from "./pages/Dashboard";
+import YouTubeAnalysis from "./pages/YouTubeAnalysis";
+import Stories from "./pages/Stories";
+import StoryDetail from "./pages/StoryDetail";
+import Characters from "./pages/Characters";
+import Visuals from "./pages/Visuals";
+import Videos from "./pages/Videos";
+import Thumbnails from "./pages/Thumbnails";
+import Playlists from "./pages/Playlists";
+import Merch from "./pages/Merch";
+import Drafts from "./pages/Drafts";
+import Publishing from "./pages/Publishing";
+import Integrations from "./pages/Integrations";
+import AdminReview from "./pages/AdminReview";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated } = useAuth();
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+  return <>{children}</>;
+}
+
+function AdminRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, role } = useAuth();
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+  if (role !== "admin") {
+    return <Navigate to="/dashboard" replace />;
+  }
+  return <>{children}</>;
+}
+
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/" element={<Landing />} />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/youtube-analysis"
+        element={
+          <ProtectedRoute>
+            <YouTubeAnalysis />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/stories"
+        element={
+          <ProtectedRoute>
+            <Stories />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/stories/:id"
+        element={
+          <ProtectedRoute>
+            <StoryDetail />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/characters"
+        element={
+          <ProtectedRoute>
+            <Characters />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/visuals"
+        element={
+          <ProtectedRoute>
+            <Visuals />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/videos"
+        element={
+          <ProtectedRoute>
+            <Videos />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/thumbnails"
+        element={
+          <ProtectedRoute>
+            <Thumbnails />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/playlists"
+        element={
+          <ProtectedRoute>
+            <Playlists />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/merch"
+        element={
+          <ProtectedRoute>
+            <Merch />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/drafts"
+        element={
+          <ProtectedRoute>
+            <Drafts />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/publishing"
+        element={
+          <ProtectedRoute>
+            <Publishing />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/integrations"
+        element={
+          <ProtectedRoute>
+            <Integrations />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/admin-review"
+        element={
+          <AdminRoute>
+            <AdminReview />
+          </AdminRoute>
+        }
+      />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
