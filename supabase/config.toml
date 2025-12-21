@@ -23,3 +23,12 @@ verify_jwt = true
 
 [functions.fetch-competitor-videos]
 verify_jwt = true
+
+[functions.analyze-thumbnails]
+verify_jwt = true
+
+[functions.check-competitor-updates]
+verify_jwt = false
+
+[functions.analyze-upload-times]
+verify_jwt = true

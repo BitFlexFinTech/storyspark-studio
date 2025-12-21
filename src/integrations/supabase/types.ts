@@ -115,6 +115,44 @@ export type Database = {
         }
         Relationships: []
       }
+      competitor_alerts: {
+        Row: {
+          alert_type: string
+          competitor_id: string | null
+          created_at: string | null
+          id: string
+          is_active: boolean | null
+          threshold: number | null
+          user_id: string
+        }
+        Insert: {
+          alert_type: string
+          competitor_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          threshold?: number | null
+          user_id: string
+        }
+        Update: {
+          alert_type?: string
+          competitor_id?: string | null
+          created_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          threshold?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "competitor_alerts_competitor_id_fkey"
+            columns: ["competitor_id"]
+            isOneToOne: false
+            referencedRelation: "competitors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       competitors: {
         Row: {
           avg_views: number | null
@@ -273,6 +311,60 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          alert_id: string | null
+          competitor_id: string | null
+          created_at: string | null
+          data: Json | null
+          id: string
+          is_read: boolean | null
+          message: string
+          notification_type: string
+          title: string
+          user_id: string
+        }
+        Insert: {
+          alert_id?: string | null
+          competitor_id?: string | null
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          is_read?: boolean | null
+          message: string
+          notification_type: string
+          title: string
+          user_id: string
+        }
+        Update: {
+          alert_id?: string | null
+          competitor_id?: string | null
+          created_at?: string | null
+          data?: Json | null
+          id?: string
+          is_read?: boolean | null
+          message?: string
+          notification_type?: string
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "competitor_alerts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_competitor_id_fkey"
+            columns: ["competitor_id"]
+            isOneToOne: false
+            referencedRelation: "competitors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       optimization_bot_settings: {
         Row: {
           auto_apply: boolean | null
@@ -423,6 +515,56 @@ export type Database = {
             columns: ["story_id"]
             isOneToOne: false
             referencedRelation: "stories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scheduled_content: {
+        Row: {
+          created_at: string | null
+          id: string
+          notes: string | null
+          scheduled_date: string
+          scheduled_time: string | null
+          status: string | null
+          suggested_by_ai: boolean | null
+          title: string
+          updated_at: string | null
+          user_id: string
+          video_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          scheduled_date: string
+          scheduled_time?: string | null
+          status?: string | null
+          suggested_by_ai?: boolean | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+          video_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          notes?: string | null
+          scheduled_date?: string
+          scheduled_time?: string | null
+          status?: string | null
+          suggested_by_ai?: boolean | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+          video_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_content_video_id_fkey"
+            columns: ["video_id"]
+            isOneToOne: false
+            referencedRelation: "videos"
             referencedColumns: ["id"]
           },
         ]
