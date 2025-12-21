@@ -1,5 +1,22 @@
 import { useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+  DragOverlay,
+  DragStartEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,22 +35,53 @@ import {
   Save,
   Undo,
 } from "lucide-react";
-import { mockStories, Scene } from "@/data/mockData";
+import { useScenes, useReorderScenes, useUpdateScene, Scene } from "@/hooks/useScenes";
+import { useStory } from "@/hooks/useStories";
+import { useAuth } from "@/contexts/AuthContext";
+import { SortableScene } from "@/components/timeline/SortableScene";
 import { toast } from "sonner";
 
 const VideoTimelineEditor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const story = mockStories.find((s) => s.id === id);
+  const { isDemoMode } = useAuth();
+  
+  const { data: story, isLoading: storyLoading } = useStory(id || '');
+  const { data: dbScenes, isLoading: scenesLoading } = useScenes(id || '');
+  const reorderScenes = useReorderScenes();
+  const updateScene = useUpdateScene();
 
-  const [scenes, setScenes] = useState<Scene[]>(story?.scenes || []);
-  const [selectedScene, setSelectedScene] = useState<Scene | null>(scenes[0] || null);
+  const [localScenes, setLocalScenes] = useState<Scene[]>([]);
+  const [selectedScene, setSelectedScene] = useState<Scene | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [zoom, setZoom] = useState(100);
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [playheadPosition, setPlayheadPosition] = useState(0);
+  const [activeId, setActiveId] = useState<string | null>(null);
 
-  const parseDuration = (duration: string): number => {
+  // Sync local scenes with DB scenes
+  const scenes = localScenes.length > 0 ? localScenes : (dbScenes || []);
+
+  // Initialize local scenes when DB data loads
+  if (dbScenes && dbScenes.length > 0 && localScenes.length === 0) {
+    setLocalScenes(dbScenes);
+    if (!selectedScene) {
+      setSelectedScene(dbScenes[0]);
+    }
+  }
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const parseDuration = (duration: string | null): number => {
+    if (!duration) return 60;
     const [mins, secs] = duration.split(":").map(Number);
     return mins * 60 + secs;
   };
@@ -46,44 +94,75 @@ const VideoTimelineEditor = () => {
 
   const totalDuration = scenes.reduce((acc, scene) => acc + parseDuration(scene.duration), 0);
 
-  const handleDragStart = (index: number) => {
-    setDraggedIndex(index);
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
   };
 
-  const handleDragOver = (e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    if (draggedIndex === null || draggedIndex === index) return;
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveId(null);
 
-    const newScenes = [...scenes];
-    const draggedScene = newScenes[draggedIndex];
-    newScenes.splice(draggedIndex, 1);
-    newScenes.splice(index, 0, draggedScene);
+    if (over && active.id !== over.id) {
+      const oldIndex = scenes.findIndex((s) => s.id === active.id);
+      const newIndex = scenes.findIndex((s) => s.id === over.id);
 
-    // Update scene numbers
-    newScenes.forEach((scene, i) => {
-      scene.number = i + 1;
-    });
+      const newScenes = arrayMove(scenes, oldIndex, newIndex).map((scene, index) => ({
+        ...scene,
+        number: index + 1,
+      }));
 
-    setScenes(newScenes);
-    setDraggedIndex(index);
-  };
+      setLocalScenes(newScenes);
 
-  const handleDragEnd = () => {
-    setDraggedIndex(null);
-    toast.success("Scene order updated");
+      // Persist to database if not in demo mode
+      if (!isDemoMode && id) {
+        reorderScenes.mutate({
+          storyId: id,
+          scenes: newScenes.map((s) => ({ id: s.id, number: s.number })),
+        });
+      }
+
+      toast.success("Scene order updated");
+    }
   };
 
   const updateSceneDuration = (sceneId: string, newDuration: number) => {
-    setScenes((prev) =>
-      prev.map((scene) =>
-        scene.id === sceneId ? { ...scene, duration: formatDuration(newDuration) } : scene
-      )
+    const updatedScenes = scenes.map((scene) =>
+      scene.id === sceneId ? { ...scene, duration: formatDuration(newDuration) } : scene
     );
+    setLocalScenes(updatedScenes);
+
+    const updatedScene = updatedScenes.find((s) => s.id === sceneId);
+    if (updatedScene) {
+      setSelectedScene(updatedScene);
+    }
   };
 
   const handleSave = () => {
+    if (!isDemoMode && id) {
+      // Save all scene updates
+      scenes.forEach((scene) => {
+        updateScene.mutate({
+          id: scene.id,
+          story_id: id,
+          duration: scene.duration,
+          number: scene.number,
+        });
+      });
+    }
     toast.success("Timeline saved successfully!");
   };
+
+  const activeScene = activeId ? scenes.find((s) => s.id === activeId) : null;
+
+  if (storyLoading || scenesLoading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center p-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        </div>
+      </AppLayout>
+    );
+  }
 
   if (!story) {
     return (
@@ -106,7 +185,10 @@ const VideoTimelineEditor = () => {
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Videos
         </Button>
-        <PageHeader title={`Edit: ${story.title}`} description="Drag scenes to reorder, adjust durations and audio">
+        <PageHeader 
+          title={`Edit: ${story.title}`} 
+          description="Drag scenes to reorder, adjust durations and audio"
+        >
           <Button variant="ghost" size="icon">
             <Undo className="h-4 w-4" />
           </Button>
@@ -167,65 +249,65 @@ const VideoTimelineEditor = () => {
             </CardContent>
           </Card>
 
-          {/* Scene Timeline */}
+          {/* Scene Timeline with DnD */}
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-base">Scenes Timeline</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {scenes.map((scene, index) => {
-                const duration = parseDuration(scene.duration);
-                const widthPercent = (duration / totalDuration) * 100 * (zoom / 100);
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={scenes.map((s) => s.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {scenes.map((scene) => (
+                    <SortableScene
+                      key={scene.id}
+                      scene={scene}
+                      isSelected={selectedScene?.id === scene.id}
+                      onClick={() => setSelectedScene(scene)}
+                    />
+                  ))}
+                </SortableContext>
 
-                return (
-                  <div
-                    key={scene.id}
-                    draggable
-                    onDragStart={() => handleDragStart(index)}
-                    onDragOver={(e) => handleDragOver(e, index)}
-                    onDragEnd={handleDragEnd}
-                    onClick={() => setSelectedScene(scene)}
-                    className={`group relative flex cursor-pointer items-center gap-3 rounded-xl border p-4 transition-all ${
-                      selectedScene?.id === scene.id
-                        ? "border-primary bg-primary/5"
-                        : "border-border hover:border-primary/30"
-                    } ${draggedIndex === index ? "opacity-50" : ""}`}
-                  >
-                    <div className="cursor-grab text-muted-foreground hover:text-foreground">
-                      <GripVertical className="h-5 w-5" />
-                    </div>
-
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Badge variant="soft">Scene {scene.number}</Badge>
-                        <span className="font-medium">{scene.title}</span>
-                      </div>
-
-                      {/* Waveform visualization */}
-                      <div className="h-12 rounded-lg bg-muted/50 overflow-hidden flex items-center px-2 gap-px">
-                        {(scene.audioWaveform || Array(20).fill(0.5)).map((height, i) => (
-                          <div
-                            key={i}
-                            className="flex-1 bg-primary/60 rounded-full min-w-[2px]"
-                            style={{ height: `${height * 100}%` }}
-                          />
-                        ))}
-                      </div>
-
-                      <div className="mt-2 flex items-center gap-4">
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <Clock className="h-3 w-3" />
-                          {scene.duration}
+                <DragOverlay>
+                  {activeScene ? (
+                    <div className="flex items-center gap-3 rounded-xl border border-primary bg-card p-4 shadow-xl">
+                      <GripVertical className="h-5 w-5 text-muted-foreground" />
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Badge variant="soft">Scene {activeScene.number}</Badge>
+                          <span className="font-medium">{activeScene.title}</span>
                         </div>
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <Volume2 className="h-3 w-3" />
-                          Audio
+                        <div className="h-12 rounded-lg bg-muted/50 overflow-hidden flex items-center px-2 gap-px">
+                          {(activeScene.audio_waveform || Array(20).fill(0.5)).map((height, i) => (
+                            <div
+                              key={i}
+                              className="flex-1 bg-primary/60 rounded-full min-w-[2px]"
+                              style={{ height: `${(typeof height === 'number' ? height : 0.5) * 100}%` }}
+                            />
+                          ))}
+                        </div>
+                        <div className="mt-2 flex items-center gap-4">
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <Clock className="h-3 w-3" />
+                            {activeScene.duration}
+                          </div>
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <Volume2 className="h-3 w-3" />
+                            Audio
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  ) : null}
+                </DragOverlay>
+              </DndContext>
             </CardContent>
           </Card>
         </div>
@@ -251,7 +333,7 @@ const VideoTimelineEditor = () => {
 
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Visual Description</p>
-                    <p className="text-sm text-muted-foreground">{selectedScene.visualDescription}</p>
+                    <p className="text-sm text-muted-foreground">{selectedScene.visual_description}</p>
                   </div>
 
                   <div>
