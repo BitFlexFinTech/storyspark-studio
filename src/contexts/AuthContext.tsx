@@ -7,12 +7,9 @@ export type UserRole = 'user' | 'admin' | null;
 interface AuthContextType {
   role: UserRole;
   isAuthenticated: boolean;
-  isDemoMode: boolean;
   user: User | null;
   session: Session | null;
   isLoading: boolean;
-  login: (role: 'user' | 'admin') => void;
-  logout: () => void;
   signIn: (email: string, password: string) => Promise<{ error: Error | null }>;
   signUp: (email: string, password: string, displayName?: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -22,7 +19,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<UserRole>(null);
-  const [isDemoMode, setIsDemoMode] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -35,7 +31,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          setIsDemoMode(false);
           // Defer role fetch to avoid deadlock
           setTimeout(() => {
             fetchUserRole(session.user.id);
@@ -81,20 +76,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Demo mode login (for testing without auth)
-  const login = (newRole: 'user' | 'admin') => {
-    setRole(newRole);
-    setIsDemoMode(true);
-    setUser({ id: 'demo-user', email: 'demo@example.com' } as User);
-  };
-
-  const logout = () => {
-    setRole(null);
-    setIsDemoMode(false);
-    setUser(null);
-    setSession(null);
-  };
-
   // Real authentication
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
@@ -122,20 +103,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    logout();
+    setRole(null);
+    setUser(null);
+    setSession(null);
   };
 
   return (
     <AuthContext.Provider
       value={{
         role,
-        isAuthenticated: role !== null || !!session,
-        isDemoMode,
+        isAuthenticated: !!session,
         user,
         session,
         isLoading,
-        login,
-        logout,
         signIn,
         signUp,
         signOut,

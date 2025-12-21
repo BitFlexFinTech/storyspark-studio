@@ -1,7 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/contexts/AuthContext';
-import { mockStories } from '@/data/mockData';
 
 export interface Scene {
   id: string;
@@ -17,28 +15,9 @@ export interface Scene {
 }
 
 export function useScenes(storyId: string) {
-  const { isDemoMode } = useAuth();
-
   return useQuery({
     queryKey: ['scenes', storyId],
     queryFn: async () => {
-      if (isDemoMode) {
-        const story = mockStories.find(s => s.id === storyId);
-        if (!story) return [];
-        return story.scenes.map(scene => ({
-          id: scene.id,
-          story_id: storyId,
-          number: scene.number,
-          title: scene.title,
-          script: scene.script,
-          visual_description: scene.visualDescription,
-          duration: scene.duration,
-          audio_waveform: scene.audioWaveform || null,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })) as Scene[];
-      }
-
       const { data, error } = await supabase
         .from('scenes')
         .select('*')

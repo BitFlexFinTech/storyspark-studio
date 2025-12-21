@@ -5,7 +5,7 @@ import { Sparkles, Play, Wand2, Users, Video, Palette, ArrowRight, LogIn } from 
 import { useEffect } from "react";
 
 const Landing = () => {
-  const { login, isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -13,11 +13,6 @@ const Landing = () => {
       navigate("/dashboard");
     }
   }, [isAuthenticated, navigate]);
-
-  const handleDemoLogin = (role: "user" | "admin") => {
-    login(role);
-    navigate("/dashboard");
-  };
 
   return (
     <div className="min-h-screen">
@@ -80,14 +75,6 @@ const Landing = () => {
                   <Play className="h-5 w-5" />
                   Get Started
                 </Link>
-              </Button>
-              <Button
-                variant="heroSecondary"
-                size="xl"
-                onClick={() => handleDemoLogin("user")}
-              >
-                <Users className="h-5 w-5" />
-                Try Demo
               </Button>
             </div>
 

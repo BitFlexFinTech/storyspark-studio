@@ -9,6 +9,8 @@ export interface CompetitorAlert {
   alert_type: "new_video" | "milestone_subscribers" | "milestone_views" | "trending_video";
   threshold: number | null;
   is_active: boolean;
+  send_email: boolean;
+  email_priority: "normal" | "high";
   created_at: string;
 }
 
@@ -16,6 +18,8 @@ export interface CreateAlertInput {
   competitor_id: string;
   alert_type: CompetitorAlert["alert_type"];
   threshold?: number;
+  send_email?: boolean;
+  email_priority?: "normal" | "high";
 }
 
 export function useCompetitorAlerts() {
@@ -54,6 +58,8 @@ export function useCreateCompetitorAlert() {
           competitor_id: input.competitor_id,
           alert_type: input.alert_type,
           threshold: input.threshold || null,
+          send_email: input.send_email ?? false,
+          email_priority: input.email_priority ?? "normal",
         })
         .select()
         .single();
@@ -75,14 +81,20 @@ export function useUpdateCompetitorAlert() {
       id,
       is_active,
       threshold,
+      send_email,
+      email_priority,
     }: {
       id: string;
       is_active?: boolean;
       threshold?: number;
+      send_email?: boolean;
+      email_priority?: "normal" | "high";
     }) => {
       const updateData: Partial<CompetitorAlert> = {};
       if (is_active !== undefined) updateData.is_active = is_active;
       if (threshold !== undefined) updateData.threshold = threshold;
+      if (send_email !== undefined) updateData.send_email = send_email;
+      if (email_priority !== undefined) updateData.email_priority = email_priority;
 
       const { error } = await supabase
         .from("competitor_alerts")

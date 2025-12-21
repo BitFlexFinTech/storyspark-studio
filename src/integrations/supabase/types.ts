@@ -317,6 +317,48 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_settings: {
+        Row: {
+          created_at: string | null
+          digest_day: number | null
+          digest_time: string | null
+          email_enabled: boolean | null
+          email_for_milestones: boolean | null
+          email_for_new_videos: boolean | null
+          email_for_trending: boolean | null
+          email_frequency: string | null
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          digest_day?: number | null
+          digest_time?: string | null
+          email_enabled?: boolean | null
+          email_for_milestones?: boolean | null
+          email_for_new_videos?: boolean | null
+          email_for_trending?: boolean | null
+          email_frequency?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          digest_day?: number | null
+          digest_time?: string | null
+          email_enabled?: boolean | null
+          email_for_milestones?: boolean | null
+          email_for_new_videos?: boolean | null
+          email_for_trending?: boolean | null
+          email_frequency?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           alert_id: string | null
