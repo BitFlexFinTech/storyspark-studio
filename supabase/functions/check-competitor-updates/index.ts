@@ -205,16 +205,54 @@ serve(async (req) => {
       }
     }
 
-    // Insert notifications
+    // Insert notifications and trigger emails for high-priority alerts
     if (notificationsToCreate.length > 0) {
-      const { error: insertError } = await supabaseClient
+      const { data: insertedNotifications, error: insertError } = await supabaseClient
         .from("notifications")
-        .insert(notificationsToCreate);
+        .insert(notificationsToCreate)
+        .select();
 
       if (insertError) {
         console.error("Error inserting notifications:", insertError);
       } else {
         console.log(`Created ${notificationsToCreate.length} notifications`);
+        
+        // Check for high-priority alerts and send emails
+        for (const notification of insertedNotifications || []) {
+          const alert = alerts?.find((a: any) => a.id === notification.alert_id);
+          if (alert?.send_email && alert?.email_priority === 'high') {
+            try {
+              const emailResponse = await fetch(
+                `${Deno.env.get("SUPABASE_URL")}/functions/v1/send-alert-email`,
+                {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+                  },
+                  body: JSON.stringify({
+                    userId: notification.user_id,
+                    notification: {
+                      title: notification.title,
+                      message: notification.message,
+                      notification_type: notification.notification_type,
+                      data: notification.data,
+                    },
+                    competitorName: alert.competitors?.channel_name,
+                  }),
+                }
+              );
+              
+              if (!emailResponse.ok) {
+                console.error("Failed to send alert email:", await emailResponse.text());
+              } else {
+                console.log(`Email sent for notification ${notification.id}`);
+              }
+            } catch (emailError) {
+              console.error("Error sending alert email:", emailError);
+            }
+          }
+        }
       }
     }
 

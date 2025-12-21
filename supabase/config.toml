@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.analyze-upload-times]
 verify_jwt = true
+
+[functions.send-alert-email]
+verify_jwt = true
