@@ -15,6 +15,8 @@ import {
   ShieldCheck,
   LogOut,
   Sparkles,
+  Lightbulb,
+  BarChart2,
   ChevronLeft,
   BarChart3,
   Search,
@@ -57,6 +59,8 @@ const workflowItems = [
   { title: "YouTube Channels", url: "/youtube-channels", icon: Tv },
   { title: "Keyword Research", url: "/keyword-research", icon: Search },
   { title: "Competitors", url: "/competitors", icon: Users },
+  { title: "Competitor Insights", url: "/competitor-insights", icon: Lightbulb },
+  { title: "Performance", url: "/performance-comparison", icon: BarChart2 },
 ];
 
 const adminItems = [

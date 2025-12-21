@@ -27,6 +27,8 @@ import StyleBlueprintDetail from "./pages/StyleBlueprintDetail";
 import YouTubeChannels from "./pages/YouTubeChannels";
 import KeywordResearch from "./pages/KeywordResearch";
 import CompetitorTracking from "./pages/CompetitorTracking";
+import CompetitorInsights from "./pages/CompetitorInsights";
+import PerformanceComparison from "./pages/PerformanceComparison";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -230,6 +232,22 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <CompetitorTracking />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/competitor-insights"
+        element={
+          <ProtectedRoute>
+            <CompetitorInsights />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/performance-comparison"
+        element={
+          <ProtectedRoute>
+            <PerformanceComparison />
           </ProtectedRoute>
         }
       />
