@@ -2,9 +2,10 @@ import { useState } from "react";
 import { IntegrationSetupWizard, CopyableText, InstructionLink } from "./IntegrationSetupWizard";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Youtube, Info } from "lucide-react";
+import { Youtube, Info, Loader2, CheckCircle2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface YouTubeSetupWizardProps {
   open: boolean;
@@ -15,6 +16,53 @@ interface YouTubeSetupWizardProps {
 export function YouTubeSetupWizard({ open, onOpenChange, onComplete }: YouTubeSetupWizardProps) {
   const [clientId, setClientId] = useState("");
   const [clientSecret, setClientSecret] = useState("");
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
+
+  const handleComplete = async () => {
+    if (!clientId || !clientSecret) {
+      toast.error("Please enter your Client ID and Client Secret");
+      return;
+    }
+
+    setIsConnecting(true);
+
+    try {
+      // Build redirect URI for OAuth callback
+      const redirectUri = `${window.location.origin}/integrations`;
+
+      // Call the OAuth init edge function
+      const { data, error } = await supabase.functions.invoke("oauth-youtube-init", {
+        body: {
+          clientId,
+          clientSecret,
+          redirectUri,
+        },
+      });
+
+      if (error) {
+        throw new Error(error.message || "Failed to initialize OAuth");
+      }
+
+      if (data?.oauthUrl) {
+        // Store credentials temporarily for callback
+        sessionStorage.setItem("youtube_oauth_pending", JSON.stringify({
+          clientId,
+          clientSecret,
+          redirectUri,
+        }));
+
+        // Redirect to Google OAuth
+        window.location.href = data.oauthUrl;
+      } else {
+        throw new Error("No OAuth URL returned");
+      }
+    } catch (error) {
+      console.error("OAuth initialization error:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to connect to YouTube");
+      setIsConnecting(false);
+    }
+  };
 
   const steps = [
     {
@@ -94,7 +142,7 @@ export function YouTubeSetupWizard({ open, onOpenChange, onComplete }: YouTubeSe
           </div>
           
           <CopyableText 
-            text={`${window.location.origin}/api/oauth/youtube/callback`}
+            text={`${window.location.origin}/integrations`}
             label="Redirect URI"
           />
           
@@ -145,31 +193,48 @@ export function YouTubeSetupWizard({ open, onOpenChange, onComplete }: YouTubeSe
       content: (
         <div className="space-y-4 text-center">
           <div className="mx-auto w-16 h-16 rounded-full bg-red-100 flex items-center justify-center">
-            <Youtube className="h-8 w-8 text-red-600" />
+            {isConnecting ? (
+              <Loader2 className="h-8 w-8 text-red-600 animate-spin" />
+            ) : isConnected ? (
+              <CheckCircle2 className="h-8 w-8 text-green-600" />
+            ) : (
+              <Youtube className="h-8 w-8 text-red-600" />
+            )}
           </div>
           
           <div className="space-y-2">
-            <h4 className="font-medium">Ready to Connect!</h4>
+            <h4 className="font-medium">
+              {isConnecting
+                ? "Connecting..."
+                : isConnected
+                ? "Connected!"
+                : "Ready to Connect!"}
+            </h4>
             <p className="text-sm text-muted-foreground">
-              Click "Complete Setup" to authorize Story Studio to access your YouTube channel.
-              You'll be able to:
+              {isConnecting
+                ? "Please wait while we redirect you to Google for authorization..."
+                : isConnected
+                ? "Your YouTube channel has been connected successfully."
+                : "Click \"Complete Setup\" to authorize Story Studio to access your YouTube channel."}
             </p>
           </div>
           
-          <ul className="text-sm text-left space-y-1 bg-muted/50 rounded-lg p-4">
-            <li className="flex items-center gap-2">
-              <span className="text-green-500">✓</span> View channel analytics
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="text-green-500">✓</span> Upload and manage videos
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="text-green-500">✓</span> Update video metadata
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="text-green-500">✓</span> Manage thumbnails
-            </li>
-          </ul>
+          {!isConnecting && !isConnected && (
+            <ul className="text-sm text-left space-y-1 bg-muted/50 rounded-lg p-4">
+              <li className="flex items-center gap-2">
+                <span className="text-green-500">✓</span> View channel analytics
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-green-500">✓</span> Upload and manage videos
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-green-500">✓</span> Update video metadata
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="text-green-500">✓</span> Manage thumbnails
+              </li>
+            </ul>
+          )}
         </div>
       ),
     },
@@ -182,7 +247,7 @@ export function YouTubeSetupWizard({ open, onOpenChange, onComplete }: YouTubeSe
       platform="youtube"
       platformName="YouTube"
       steps={steps}
-      onComplete={onComplete}
+      onComplete={handleComplete}
     />
   );
 }

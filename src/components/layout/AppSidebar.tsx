@@ -56,6 +56,7 @@ const workflowItems = [
   { title: "Integrations", url: "/integrations", icon: Plug },
   { title: "YouTube Channels", url: "/youtube-channels", icon: Tv },
   { title: "Keyword Research", url: "/keyword-research", icon: Search },
+  { title: "Competitors", url: "/competitors", icon: Users },
 ];
 
 const adminItems = [
