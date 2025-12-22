@@ -306,9 +306,8 @@ function AppRoutes() {
           </AdminRoute>
         }
       />
-      <Route path="*" element={<NotFound />} />
       <Route
-        path="/alerts"
+        path="/competitor-alerts"
         element={
           <ProtectedRoute>
             <CompetitorAlerts />
@@ -323,6 +322,7 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }
