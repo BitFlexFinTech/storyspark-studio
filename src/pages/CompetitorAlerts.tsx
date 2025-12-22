@@ -19,16 +19,25 @@ import { Bell, Plus, Trash2, Video, Users, TrendingUp, Eye, Mail, Clock } from "
 import { toast } from "sonner";
 import { format } from "date-fns";
 
+type AlertType = "new_video" | "milestone_subscribers" | "milestone_views" | "trending_video";
+type EmailPriority = "normal" | "high";
+
 const alertTypeOptions = [
-  { value: "new_video", label: "New Video Upload", icon: Video, description: "When competitor uploads a new video" },
-  { value: "subscriber_milestone", label: "Subscriber Milestone", icon: Users, description: "When competitor reaches X subscribers" },
-  { value: "view_milestone", label: "View Milestone", icon: Eye, description: "When a video reaches X views" },
-  { value: "trending", label: "Trending Video", icon: TrendingUp, description: "When a video goes viral (100k+ in 48hrs)" },
+  { value: "new_video" as const, label: "New Video Upload", icon: Video, description: "When competitor uploads a new video" },
+  { value: "milestone_subscribers" as const, label: "Subscriber Milestone", icon: Users, description: "When competitor reaches X subscribers" },
+  { value: "milestone_views" as const, label: "View Milestone", icon: Eye, description: "When a video reaches X views" },
+  { value: "trending_video" as const, label: "Trending Video", icon: TrendingUp, description: "When a video goes viral (100k+ in 48hrs)" },
 ];
 
 export default function CompetitorAlerts() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [newAlert, setNewAlert] = useState({
+  const [newAlert, setNewAlert] = useState<{
+    competitor_id: string;
+    alert_type: AlertType;
+    threshold: number;
+    send_email: boolean;
+    email_priority: EmailPriority;
+  }>({
     competitor_id: "",
     alert_type: "new_video",
     threshold: 0,
@@ -46,7 +55,7 @@ export default function CompetitorAlerts() {
   const deleteAlert = useDeleteCompetitorAlert();
 
   const handleCreateAlert = () => {
-    if (!newAlert.competitor_id && newAlert.alert_type !== "trending") {
+    if (!newAlert.competitor_id && newAlert.alert_type !== "trending_video") {
       toast.error("Please select a competitor");
       return;
     }
@@ -129,7 +138,7 @@ export default function CompetitorAlerts() {
                     <Label>Alert Type</Label>
                     <Select
                       value={newAlert.alert_type}
-                      onValueChange={(v) => setNewAlert({ ...newAlert, alert_type: v })}
+                      onValueChange={(v: AlertType) => setNewAlert({ ...newAlert, alert_type: v })}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -170,14 +179,14 @@ export default function CompetitorAlerts() {
                     </Select>
                   </div>
 
-                  {(newAlert.alert_type === "subscriber_milestone" || newAlert.alert_type === "view_milestone") && (
+                  {(newAlert.alert_type === "milestone_subscribers" || newAlert.alert_type === "milestone_views") && (
                     <div className="space-y-2">
                       <Label>Threshold</Label>
                       <Input
                         type="number"
                         value={newAlert.threshold}
                         onChange={(e) => setNewAlert({ ...newAlert, threshold: parseInt(e.target.value) || 0 })}
-                        placeholder={newAlert.alert_type === "subscriber_milestone" ? "e.g., 100000" : "e.g., 1000000"}
+                        placeholder={newAlert.alert_type === "milestone_subscribers" ? "e.g., 100000" : "e.g., 1000000"}
                       />
                     </div>
                   )}
@@ -198,13 +207,12 @@ export default function CompetitorAlerts() {
                       <Label>Email Priority</Label>
                       <Select
                         value={newAlert.email_priority}
-                        onValueChange={(v) => setNewAlert({ ...newAlert, email_priority: v })}
+                        onValueChange={(v: EmailPriority) => setNewAlert({ ...newAlert, email_priority: v })}
                       >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="low">Low (Digest)</SelectItem>
                           <SelectItem value="normal">Normal</SelectItem>
                           <SelectItem value="high">High (Immediate)</SelectItem>
                         </SelectContent>
