@@ -10,6 +10,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BookOpen, Search, Plus, BarChart3 } from "lucide-react";
 import { useStories } from "@/hooks/useStories";
+import { SeedSampleData } from "@/components/stories/SeedSampleData";
 
 const Stories = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -135,12 +136,16 @@ const Stories = () => {
               : "Start by analyzing a YouTube video to generate your first story."}
           </p>
           {!searchQuery && (
-            <Button variant="hero" className="mt-4" asChild>
-              <Link to="/youtube-analysis">
-                <Plus className="h-4 w-4" />
-                Analyze Video
-              </Link>
-            </Button>
+            <div className="flex flex-col items-center gap-2">
+              <Button variant="hero" className="mt-4" asChild>
+                <Link to="/youtube-analysis">
+                  <Plus className="h-4 w-4" />
+                  Analyze Video
+                </Link>
+              </Button>
+              <span className="text-sm text-muted-foreground">or</span>
+              <SeedSampleData />
+            </div>
           )}
         </div>
       )}
