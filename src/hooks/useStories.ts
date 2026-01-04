@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { Scene } from './useScenes';
 
 export interface Story {
   id: string;
@@ -12,6 +13,7 @@ export interface Story {
   thumbnail_url: string | null;
   created_at: string;
   updated_at: string;
+  scenes?: Scene[];
 }
 
 export function useStories() {
@@ -22,7 +24,7 @@ export function useStories() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('stories')
-        .select('*')
+        .select('*, scenes(*)')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
