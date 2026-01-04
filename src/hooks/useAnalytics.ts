@@ -185,3 +185,31 @@ export function useAnalyticsTimeSeries() {
     enabled: isAuthenticated,
   });
 }
+
+export function useAnalytics() {
+  const { isAuthenticated, user } = useAuth();
+
+  return useQuery({
+    queryKey: ['all-analytics', user?.id],
+    queryFn: async () => {
+      const { data: videos, error: videosError } = await supabase
+        .from('videos')
+        .select('id');
+
+      if (videosError) throw videosError;
+      if (!videos || videos.length === 0) return [];
+
+      const videoIds = videos.map(v => v.id);
+
+      const { data, error } = await supabase
+        .from('video_analytics')
+        .select('*')
+        .in('video_id', videoIds)
+        .order('date', { ascending: false });
+
+      if (error) throw error;
+      return data as VideoAnalytics[];
+    },
+    enabled: isAuthenticated,
+  });
+}
