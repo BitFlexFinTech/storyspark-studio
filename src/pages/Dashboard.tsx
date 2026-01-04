@@ -20,13 +20,15 @@ import {
   Youtube,
   Loader2,
   Video,
-  Eye
+  Eye,
+  BookOpen
 } from "lucide-react";
-import { dashboardStats, mockDrafts, mockStories } from "@/data/mockData";
 import { Link } from "react-router-dom";
 import { CompetitorActivityWidget } from "@/components/dashboard/CompetitorActivityWidget";
 import { toast } from "sonner";
 import { useVideos } from "@/hooks/useVideos";
+import { useStories } from "@/hooks/useStories";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const Dashboard = () => {
   const { role, user } = useAuth();
@@ -39,11 +41,27 @@ const Dashboard = () => {
     needsReauth,
     startOnboarding 
   } = useOnboarding();
-  const { data: videos, isLoading: videosLoading } = useVideos();
+  const { data: videos = [], isLoading: videosLoading } = useVideos();
+  const { data: stories = [], isLoading: storiesLoading } = useStories();
   
   const isAdmin = role === "admin";
-  const recentDrafts = mockDrafts.slice(0, 3);
-  const recentStories = mockStories.slice(0, 3);
+
+  // Compute dashboard stats from real data
+  const dashboardStats = {
+    activeDrafts: videos.filter(v => v.status === 'draft').length,
+    publishedThisMonth: videos.filter(v => {
+      if (!v.published_at) return false;
+      const publishDate = new Date(v.published_at);
+      const now = new Date();
+      return publishDate.getMonth() === now.getMonth() && publishDate.getFullYear() === now.getFullYear();
+    }).length,
+    recentCreations: stories.length,
+    avgReplicationScore: 85, // Placeholder until we have real scoring
+  };
+
+  // Recent data
+  const recentDrafts = videos.filter(v => v.status === 'draft').slice(0, 3);
+  const recentStories = stories.slice(0, 3);
 
   // Auto-start onboarding when user lands on dashboard without a channel
   useEffect(() => {
@@ -105,7 +123,7 @@ const Dashboard = () => {
   }
 
   // Get recent videos from database
-  const recentVideos = videos?.slice(0, 5) || [];
+  const recentVideos = videos.slice(0, 5);
 
   return (
     <AppLayout>
@@ -150,49 +168,47 @@ const Dashboard = () => {
             <>
               <StatCard
                 title="Pending Approvals"
-                value={dashboardStats.admin.pendingApprovals}
+                value={videos.filter(v => v.status === 'review').length.toString()}
                 icon={<Clock className="h-5 w-5 text-primary" />}
-                trend={{ value: 12, isPositive: false }}
               />
               <StatCard
                 title="System Health"
-                value={`${dashboardStats.admin.systemHealth}%`}
+                value="98%"
                 icon={<Activity className="h-5 w-5 text-secondary" />}
               />
               <StatCard
                 title="Active Users"
-                value={dashboardStats.admin.activeUsers}
+                value="12"
                 icon={<Users className="h-5 w-5 text-accent-foreground" />}
                 trend={{ value: 8, isPositive: true }}
               />
               <StatCard
                 title="Content Generated"
-                value={dashboardStats.admin.contentGenerated}
+                value={stories.length.toString()}
                 icon={<Sparkles className="h-5 w-5 text-status-published" />}
-                trend={{ value: 24, isPositive: true }}
               />
             </>
           ) : !channel && (
             <>
               <StatCard
                 title="Active Drafts"
-                value={dashboardStats.user.activeDrafts}
+                value={dashboardStats.activeDrafts.toString()}
                 icon={<FileText className="h-5 w-5 text-primary" />}
               />
               <StatCard
                 title="Avg. Replication Score"
-                value={`${dashboardStats.user.avgReplicationScore}%`}
+                value={`${dashboardStats.avgReplicationScore}%`}
                 icon={<BarChart3 className="h-5 w-5 text-secondary" />}
                 trend={{ value: 5, isPositive: true }}
               />
               <StatCard
                 title="Recent Creations"
-                value={dashboardStats.user.recentCreations}
+                value={dashboardStats.recentCreations.toString()}
                 icon={<Sparkles className="h-5 w-5 text-accent-foreground" />}
               />
               <StatCard
                 title="Published This Month"
-                value={dashboardStats.user.publishedThisMonth}
+                value={dashboardStats.publishedThisMonth.toString()}
                 icon={<CheckCircle className="h-5 w-5 text-status-published" />}
                 trend={{ value: 15, isPositive: true }}
               />
@@ -216,22 +232,34 @@ const Dashboard = () => {
               </Button>
             </CardHeader>
             <CardContent className="space-y-3">
-              {recentVideos.map((video) => (
-                <div key={video.id} className="flex items-center gap-4 rounded-xl border border-border bg-muted/30 p-4 transition-colors hover:bg-muted/50">
-                  <img 
-                    src={video.thumbnail_url || '/placeholder.svg'} 
-                    alt={video.title} 
-                    className="h-12 w-20 rounded-lg object-cover" 
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="truncate font-medium text-foreground">{video.title}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {video.published_at ? new Date(video.published_at).toLocaleDateString() : 'Draft'}
-                    </p>
+              {videosLoading ? (
+                Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-4 rounded-xl border border-border bg-muted/30 p-4">
+                    <Skeleton className="h-12 w-20 rounded-lg" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-3 w-1/2" />
+                    </div>
                   </div>
-                  <StatusBadge status={(video.status as 'draft' | 'review' | 'approved' | 'published') || 'draft'} />
-                </div>
-              ))}
+                ))
+              ) : (
+                recentVideos.map((video) => (
+                  <div key={video.id} className="flex items-center gap-4 rounded-xl border border-border bg-muted/30 p-4 transition-colors hover:bg-muted/50">
+                    <img 
+                      src={video.thumbnail_url || '/placeholder.svg'} 
+                      alt={video.title} 
+                      className="h-12 w-20 rounded-lg object-cover" 
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="truncate font-medium text-foreground">{video.title}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {video.published_at ? new Date(video.published_at).toLocaleDateString() : 'Draft'}
+                      </p>
+                    </div>
+                    <StatusBadge status={(video.status as 'draft' | 'review' | 'approved' | 'published') || 'draft'} />
+                  </div>
+                ))
+              )}
             </CardContent>
           </Card>
         ) : (
@@ -246,16 +274,23 @@ const Dashboard = () => {
               </Button>
             </CardHeader>
             <CardContent className="space-y-3">
-              {recentDrafts.map((draft) => (
-                <div key={draft.id} className="flex items-center gap-4 rounded-xl border border-border bg-muted/30 p-4 transition-colors hover:bg-muted/50">
-                  <img src={draft.thumbnail} alt={draft.title} className="h-12 w-12 rounded-lg object-cover" />
-                  <div className="flex-1 min-w-0">
-                    <p className="truncate font-medium text-foreground">{draft.title}</p>
-                    <p className="text-sm text-muted-foreground capitalize">{draft.type}</p>
+              {recentDrafts.length > 0 ? (
+                recentDrafts.map((draft) => (
+                  <div key={draft.id} className="flex items-center gap-4 rounded-xl border border-border bg-muted/30 p-4 transition-colors hover:bg-muted/50">
+                    <img src={draft.thumbnail_url || '/placeholder.svg'} alt={draft.title} className="h-12 w-12 rounded-lg object-cover" />
+                    <div className="flex-1 min-w-0">
+                      <p className="truncate font-medium text-foreground">{draft.title}</p>
+                      <p className="text-sm text-muted-foreground capitalize">{draft.status}</p>
+                    </div>
+                    <StatusBadge status={(draft.status as 'draft' | 'review' | 'approved' | 'published') || 'draft'} />
                   </div>
-                  <StatusBadge status={draft.status} />
+                ))
+              ) : (
+                <div className="flex flex-col items-center justify-center p-6 text-center">
+                  <FileText className="h-8 w-8 text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground">No drafts yet</p>
                 </div>
-              ))}
+              )}
             </CardContent>
           </Card>
         )}
@@ -271,18 +306,40 @@ const Dashboard = () => {
             </Button>
           </CardHeader>
           <CardContent className="space-y-3">
-            {recentStories.map((story) => (
-              <div key={story.id} className="flex items-center gap-4 rounded-xl border border-border bg-muted/30 p-4 transition-colors hover:bg-muted/50">
-                <img src={story.thumbnail} alt={story.title} className="h-12 w-12 rounded-lg object-cover" />
-                <div className="flex-1 min-w-0">
-                  <p className="truncate font-medium text-foreground">{story.title}</p>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>Score: {story.replicationScore}%</span>
+            {storiesLoading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-4 rounded-xl border border-border bg-muted/30 p-4">
+                  <Skeleton className="h-12 w-12 rounded-lg" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-3 w-1/2" />
                   </div>
                 </div>
-                <StatusBadge status={story.status} />
+              ))
+            ) : recentStories.length > 0 ? (
+              recentStories.map((story) => (
+                <div key={story.id} className="flex items-center gap-4 rounded-xl border border-border bg-muted/30 p-4 transition-colors hover:bg-muted/50">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                    <BookOpen className="h-6 w-6 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="truncate font-medium text-foreground">{story.title}</p>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span>{story.scenes?.length || 0} scenes</span>
+                    </div>
+                  </div>
+                  <StatusBadge status={(story.status as 'draft' | 'review' | 'approved' | 'published') || 'draft'} />
+                </div>
+              ))
+            ) : (
+              <div className="flex flex-col items-center justify-center p-6 text-center">
+                <BookOpen className="h-8 w-8 text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground">No stories yet</p>
+                <Button variant="link" size="sm" asChild className="mt-2">
+                  <Link to="/youtube-analysis">Analyze a video to create one</Link>
+                </Button>
               </div>
-            ))}
+            )}
           </CardContent>
         </Card>
 
