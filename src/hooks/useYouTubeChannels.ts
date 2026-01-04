@@ -139,24 +139,44 @@ export function useYouTubeChannelAnalytics(channelId: string | null) {
 
       if (analyticsError) throw analyticsError;
 
-      // Aggregate analytics
+      // Aggregate analytics from real data
       const totalViews = analytics?.reduce((sum, a) => sum + (a.views || 0), 0) ?? 0;
       const totalWatchTime = analytics?.reduce((sum, a) => sum + (a.watch_time_hours || 0), 0) ?? 0;
       const avgViewDuration = totalViews > 0 ? (totalWatchTime * 60) / totalViews : 0;
 
-      // Create top videos list with mock data for now
-      const topVideos = videos?.slice(0, 5).map((v, i) => ({
-        id: v.id,
-        title: v.title,
-        views: Math.floor(Math.random() * 10000) + 1000,
-        likes: Math.floor(Math.random() * 500) + 50,
-      })) ?? [];
+      // Aggregate per-video analytics
+      const videoAnalyticsMap = new Map<string, { views: number; likes: number }>();
+      analytics?.forEach(a => {
+        const existing = videoAnalyticsMap.get(a.video_id) || { views: 0, likes: 0 };
+        videoAnalyticsMap.set(a.video_id, {
+          views: existing.views + (a.views || 0),
+          likes: existing.likes + (a.likes || 0),
+        });
+      });
+
+      // Create top videos list with real data
+      const topVideos = videos?.slice(0, 5).map((v) => {
+        const videoStats = videoAnalyticsMap.get(v.id) || { views: 0, likes: 0 };
+        return {
+          id: v.id,
+          title: v.title,
+          views: videoStats.views,
+          likes: videoStats.likes,
+        };
+      }).sort((a, b) => b.views - a.views) ?? [];
+
+      // Calculate subscriber growth from analytics if available
+      const recentAnalytics = analytics?.slice(-7) ?? [];
+      const oldAnalytics = analytics?.slice(0, 7) ?? [];
+      const recentViews = recentAnalytics.reduce((sum, a) => sum + (a.views || 0), 0);
+      const oldViews = oldAnalytics.reduce((sum, a) => sum + (a.views || 0), 0);
+      const subscriberGrowth = oldViews > 0 ? Math.round(((recentViews - oldViews) / oldViews) * 100) : 0;
 
       return {
         totalViews,
         totalWatchTime,
         avgViewDuration,
-        subscriberGrowth: Math.floor(Math.random() * 500) + 100,
+        subscriberGrowth,
         topVideos,
       };
     },

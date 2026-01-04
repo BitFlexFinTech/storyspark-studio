@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/shared/PageHeader";
@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Slider } from "@/components/ui/slider";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -15,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import {
   ArrowLeft,
   Save,
@@ -28,21 +28,90 @@ import {
   Play,
   User,
   Sparkles,
+  Square,
 } from "lucide-react";
-import { mockCharacters, mockStories, Character } from "@/data/mockData";
+import { useCharacter, useUpdateCharacter } from "@/hooks/useCharacters";
 import { toast } from "sonner";
+
+interface CharacterState {
+  name: string;
+  personality: string;
+  voiceStyle: string;
+  voiceType: 'warm' | 'energetic' | 'calm' | 'playful';
+  voiceAccent: string;
+  voiceAge: number;
+  traits: string[];
+  lockedTraits: string[];
+  appearance: string;
+  backstory: string;
+}
 
 const CharacterEditor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const originalCharacter = mockCharacters.find((c) => c.id === id);
+  const { data: dbCharacter, isLoading } = useCharacter(id || "");
+  const updateCharacter = useUpdateCharacter();
 
-  const [character, setCharacter] = useState<Character | null>(originalCharacter || null);
+  const [character, setCharacter] = useState<CharacterState>({
+    name: "",
+    personality: "",
+    voiceStyle: "",
+    voiceType: "warm",
+    voiceAccent: "American",
+    voiceAge: 25,
+    traits: [],
+    lockedTraits: [],
+    appearance: "",
+    backstory: "",
+  });
   const [newTrait, setNewTrait] = useState("");
   const [newLockedTrait, setNewLockedTrait] = useState("");
   const [isTestingVoice, setIsTestingVoice] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
-  if (!character) {
+  // Initialize state from database character
+  useEffect(() => {
+    if (dbCharacter) {
+      setCharacter({
+        name: dbCharacter.name || "",
+        personality: dbCharacter.personality || "",
+        voiceStyle: dbCharacter.voice_type || "warm",
+        voiceType: (dbCharacter.voice_type as 'warm' | 'energetic' | 'calm' | 'playful') || "warm",
+        voiceAccent: dbCharacter.voice_accent || "American",
+        voiceAge: parseInt(dbCharacter.voice_age || "25") || 25,
+        traits: dbCharacter.role ? [dbCharacter.role] : [],
+        lockedTraits: (dbCharacter.locked_traits as string[]) || [],
+        appearance: dbCharacter.appearance || "",
+        backstory: dbCharacter.backstory || "",
+      });
+    }
+  }, [dbCharacter]);
+
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="space-y-6">
+          <Skeleton className="h-10 w-48" />
+          <div className="grid gap-6 lg:grid-cols-3">
+            <div className="lg:col-span-2 space-y-6">
+              <Card>
+                <CardContent className="p-6">
+                  <Skeleton className="h-32 w-full" />
+                </CardContent>
+              </Card>
+            </div>
+            <Card>
+              <CardContent className="p-6">
+                <Skeleton className="h-64 w-full" />
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  if (!dbCharacter && !isLoading) {
     return (
       <AppLayout>
         <div className="flex flex-col items-center justify-center p-12">
@@ -58,47 +127,105 @@ const CharacterEditor = () => {
 
   const addTrait = () => {
     if (!newTrait.trim()) return;
-    setCharacter((prev) =>
-      prev ? { ...prev, traits: [...prev.traits, newTrait.trim()] } : prev
-    );
+    setCharacter((prev) => ({ ...prev, traits: [...prev.traits, newTrait.trim()] }));
     setNewTrait("");
   };
 
   const removeTrait = (trait: string) => {
-    setCharacter((prev) =>
-      prev ? { ...prev, traits: prev.traits.filter((t) => t !== trait) } : prev
-    );
+    setCharacter((prev) => ({ ...prev, traits: prev.traits.filter((t) => t !== trait) }));
   };
 
   const addLockedTrait = () => {
     if (!newLockedTrait.trim()) return;
-    setCharacter((prev) =>
-      prev ? { ...prev, lockedTraits: [...prev.lockedTraits, newLockedTrait.trim()] } : prev
-    );
+    setCharacter((prev) => ({ ...prev, lockedTraits: [...prev.lockedTraits, newLockedTrait.trim()] }));
     setNewLockedTrait("");
   };
 
   const removeLockedTrait = (trait: string) => {
     if (!confirm("Removing locked traits may affect character consistency across content. Continue?")) return;
-    setCharacter((prev) =>
-      prev ? { ...prev, lockedTraits: prev.lockedTraits.filter((t) => t !== trait) } : prev
-    );
+    setCharacter((prev) => ({ ...prev, lockedTraits: prev.lockedTraits.filter((t) => t !== trait) }));
     toast.warning("Locked trait removed - regeneration may vary");
   };
 
+  // Real voice testing using Web Speech API
   const handleTestVoice = () => {
+    if (!('speechSynthesis' in window)) {
+      toast.error("Voice synthesis is not supported in your browser");
+      return;
+    }
+
     setIsTestingVoice(true);
-    setTimeout(() => {
+
+    const sampleText = character.personality 
+      ? `Hello, I am ${character.name}. ${character.personality.split('.')[0]}.`
+      : `Hello, I am ${character.name}. Nice to meet you!`;
+
+    const utterance = new SpeechSynthesisUtterance(sampleText);
+    
+    // Map voice settings to Web Speech API
+    utterance.rate = character.voiceType === 'energetic' ? 1.2 : 
+                     character.voiceType === 'calm' ? 0.9 : 1.0;
+    utterance.pitch = character.voiceType === 'playful' ? 1.3 : 
+                      character.voiceType === 'calm' ? 0.8 : 1.0;
+    
+    // Try to find a voice matching the accent
+    const voices = speechSynthesis.getVoices();
+    const accentMap: Record<string, string> = {
+      'British': 'en-GB',
+      'Australian': 'en-AU',
+      'American': 'en-US',
+      'Neutral': 'en-US',
+    };
+    
+    const preferredVoice = voices.find(v => 
+      v.lang.includes(accentMap[character.voiceAccent] || 'en-US')
+    );
+    if (preferredVoice) utterance.voice = preferredVoice;
+
+    utterance.onend = () => {
       setIsTestingVoice(false);
       toast.success("Voice sample played");
-    }, 2000);
+    };
+
+    utterance.onerror = () => {
+      setIsTestingVoice(false);
+      toast.error("Voice playback failed");
+    };
+
+    speechSynthesis.speak(utterance);
   };
 
-  const handleSave = () => {
-    toast.success("Character saved successfully!");
+  const handleStopVoice = () => {
+    speechSynthesis.cancel();
+    setIsTestingVoice(false);
   };
 
-  const characterStories = mockStories.filter((s) => character.stories.includes(s.id));
+  const handleSave = async () => {
+    if (!id) return;
+    
+    setIsSaving(true);
+    try {
+      await updateCharacter.mutateAsync({
+        id,
+        name: character.name,
+        personality: character.personality,
+        voice_type: character.voiceType,
+        voice_accent: character.voiceAccent,
+        voice_age: character.voiceAge.toString(),
+        role: character.traits[0] || null,
+        locked_traits: character.lockedTraits,
+        appearance: character.appearance,
+        backstory: character.backstory,
+      });
+      toast.success("Character saved successfully!");
+    } catch (error) {
+      toast.error("Failed to save character");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${character.name || 'default'}`;
 
   return (
     <AppLayout>
@@ -107,10 +234,10 @@ const CharacterEditor = () => {
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Characters
         </Button>
-        <PageHeader title={`Edit: ${character.name}`} description="Customize character DNA, voice, and visual traits">
-          <Button variant="hero" onClick={handleSave}>
+        <PageHeader title={`Edit: ${character.name || 'Character'}`} description="Customize character DNA, voice, and visual traits">
+          <Button variant="hero" onClick={handleSave} disabled={isSaving}>
             <Save className="h-4 w-4" />
-            Save Changes
+            {isSaving ? "Saving..." : "Save Changes"}
           </Button>
         </PageHeader>
       </div>
@@ -129,11 +256,13 @@ const CharacterEditor = () => {
             <CardContent className="space-y-6">
               <div className="flex items-start gap-6">
                 <div className="relative">
-                  <img
-                    src={character.avatar}
-                    alt={character.name}
-                    className="h-32 w-32 rounded-2xl object-cover shadow-lg"
-                  />
+                  <div className="h-32 w-32 rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center shadow-lg">
+                    <img
+                      src={avatarUrl}
+                      alt={character.name}
+                      className="h-24 w-24"
+                    />
+                  </div>
                   <Button
                     variant="secondary"
                     size="icon"
@@ -147,9 +276,7 @@ const CharacterEditor = () => {
                     <label className="text-sm font-medium">Name</label>
                     <Input
                       value={character.name}
-                      onChange={(e) =>
-                        setCharacter((prev) => (prev ? { ...prev, name: e.target.value } : prev))
-                      }
+                      onChange={(e) => setCharacter((prev) => ({ ...prev, name: e.target.value }))}
                       className="mt-1"
                     />
                   </div>
@@ -157,13 +284,10 @@ const CharacterEditor = () => {
                     <label className="text-sm font-medium">Personality</label>
                     <Textarea
                       value={character.personality}
-                      onChange={(e) =>
-                        setCharacter((prev) =>
-                          prev ? { ...prev, personality: e.target.value } : prev
-                        )
-                      }
+                      onChange={(e) => setCharacter((prev) => ({ ...prev, personality: e.target.value }))}
                       className="mt-1"
                       rows={2}
+                      placeholder="Describe the character's personality..."
                     />
                   </div>
                 </div>
@@ -185,8 +309,8 @@ const CharacterEditor = () => {
                   <label className="text-sm font-medium">Voice Type</label>
                   <Select
                     value={character.voiceType}
-                    onValueChange={(value: any) =>
-                      setCharacter((prev) => (prev ? { ...prev, voiceType: value } : prev))
+                    onValueChange={(value: 'warm' | 'energetic' | 'calm' | 'playful') =>
+                      setCharacter((prev) => ({ ...prev, voiceType: value }))
                     }
                   >
                     <SelectTrigger className="mt-1">
@@ -204,9 +328,7 @@ const CharacterEditor = () => {
                   <label className="text-sm font-medium">Accent</label>
                   <Select
                     value={character.voiceAccent}
-                    onValueChange={(value) =>
-                      setCharacter((prev) => (prev ? { ...prev, voiceAccent: value } : prev))
-                    }
+                    onValueChange={(value) => setCharacter((prev) => ({ ...prev, voiceAccent: value }))}
                   >
                     <SelectTrigger className="mt-1">
                       <SelectValue />
@@ -228,42 +350,31 @@ const CharacterEditor = () => {
                   min={5}
                   max={60}
                   step={1}
-                  onValueChange={([value]) =>
-                    setCharacter((prev) => (prev ? { ...prev, voiceAge: value } : prev))
-                  }
+                  onValueChange={([value]) => setCharacter((prev) => ({ ...prev, voiceAge: value }))}
                   className="mt-2"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium">Voice Style Description</label>
-                <Input
-                  value={character.voiceStyle}
-                  onChange={(e) =>
-                    setCharacter((prev) => (prev ? { ...prev, voiceStyle: e.target.value } : prev))
-                  }
-                  className="mt-1"
                 />
               </div>
 
               <Button
                 variant="outline"
-                onClick={handleTestVoice}
-                disabled={isTestingVoice}
+                onClick={isTestingVoice ? handleStopVoice : handleTestVoice}
                 className="w-full"
               >
                 {isTestingVoice ? (
                   <>
-                    <Volume2 className="h-4 w-4 animate-pulse" />
-                    Playing Sample...
+                    <Square className="h-4 w-4 mr-2" />
+                    Stop Playing
                   </>
                 ) : (
                   <>
-                    <Play className="h-4 w-4" />
-                    Test Voice
+                    <Play className="h-4 w-4 mr-2" />
+                    Test Voice (Web Speech API)
                   </>
                 )}
               </Button>
+              <p className="text-xs text-muted-foreground text-center">
+                Uses your browser's built-in voice synthesis. For premium voices, connect ElevenLabs in Integrations.
+              </p>
             </CardContent>
           </Card>
 
@@ -356,60 +467,30 @@ const CharacterEditor = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-center">
-                <img
-                  src={character.avatar}
-                  alt={character.name}
-                  className="mx-auto h-40 w-40 rounded-2xl object-cover shadow-lg"
-                />
-                <h3 className="mt-4 font-display text-xl font-bold">{character.name}</h3>
-                <p className="text-sm text-muted-foreground">{character.voiceStyle}</p>
+                <div className="mx-auto h-40 w-40 rounded-2xl bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center shadow-lg">
+                  <img
+                    src={avatarUrl}
+                    alt={character.name}
+                    className="h-28 w-28"
+                  />
+                </div>
+                <h3 className="mt-4 font-display text-xl font-bold">{character.name || "Unnamed"}</h3>
+                <p className="text-sm text-muted-foreground capitalize">{character.voiceType} voice</p>
               </div>
 
               <div className="rounded-lg border border-border bg-muted/30 p-3">
                 <p className="text-xs text-muted-foreground mb-1">Personality</p>
-                <p className="text-sm">{character.personality}</p>
+                <p className="text-sm">{character.personality || "Not defined"}</p>
               </div>
 
-              <div className="flex flex-wrap gap-1">
-                {character.traits.slice(0, 3).map((trait) => (
-                  <Badge key={trait} variant="soft" className="text-xs">
-                    {trait}
-                  </Badge>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Story Appearances */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Appears In</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {characterStories.length > 0 ? (
-                <div className="space-y-2">
-                  {characterStories.map((story) => (
-                    <div
-                      key={story.id}
-                      className="flex items-center gap-3 rounded-lg border border-border p-3 cursor-pointer hover:bg-muted/50"
-                      onClick={() => navigate(`/stories/${story.id}`)}
-                    >
-                      <img
-                        src={story.thumbnail}
-                        alt={story.title}
-                        className="h-10 w-10 rounded-lg object-cover"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="truncate text-sm font-medium">{story.title}</p>
-                        <p className="text-xs text-muted-foreground capitalize">{story.status}</p>
-                      </div>
-                    </div>
+              {character.traits.length > 0 && (
+                <div className="flex flex-wrap gap-1">
+                  {character.traits.slice(0, 3).map((trait) => (
+                    <Badge key={trait} variant="soft" className="text-xs">
+                      {trait}
+                    </Badge>
                   ))}
                 </div>
-              ) : (
-                <p className="text-center text-sm text-muted-foreground py-4">
-                  Not used in any stories yet
-                </p>
               )}
             </CardContent>
           </Card>

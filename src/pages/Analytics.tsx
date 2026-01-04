@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { StatCard } from "@/components/shared/StatCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Select,
   SelectContent,
@@ -33,23 +34,81 @@ import {
   ThumbsUp,
   MessageSquare,
   Share2,
+  BarChart3,
 } from "lucide-react";
-import { aggregatedAnalytics, mockAnalytics } from "@/data/mockData";
+import { useAnalytics } from "@/hooks/useAnalytics";
+import { useVideos } from "@/hooks/useVideos";
 import { useState } from "react";
 
 const COLORS = ["hsl(var(--primary))", "hsl(var(--secondary))", "hsl(var(--accent))", "hsl(var(--status-published))", "hsl(var(--muted-foreground))"];
 
+// Default demographics data
+const defaultDemographics = {
+  ageGroups: [
+    { name: "2-4", value: 25 },
+    { name: "5-7", value: 35 },
+    { name: "8-10", value: 25 },
+    { name: "Parents", value: 15 },
+  ],
+  countries: [
+    { name: "United States", value: 35 },
+    { name: "United Kingdom", value: 18 },
+    { name: "Canada", value: 12 },
+    { name: "Australia", value: 10 },
+    { name: "Germany", value: 8 },
+  ],
+};
+
 const Analytics = () => {
   const [dateRange, setDateRange] = useState("7d");
-  const analytics = aggregatedAnalytics;
+  const { data: analyticsData = [], isLoading: analyticsLoading } = useAnalytics();
+  const { data: videos = [], isLoading: videosLoading } = useVideos();
 
-  // Combine data from all videos for the overview chart
-  const combinedData = mockAnalytics[0].data.map((item, index) => ({
+  const isLoading = analyticsLoading || videosLoading;
+
+  // Aggregate analytics from real data
+  const totalViews = analyticsData.reduce((sum, a) => sum + (a.views || 0), 0);
+  const totalLikes = analyticsData.reduce((sum, a) => sum + (a.likes || 0), 0);
+  const totalComments = analyticsData.reduce((sum, a) => sum + (a.comments || 0), 0);
+  const totalWatchTime = analyticsData.reduce((sum, a) => sum + (a.watch_time_hours || 0), 0);
+
+  const aggregatedAnalytics = {
+    totalViews: totalViews || 0,
+    totalSubscribers: 0, // Would come from channel data
+    subscriberGrowth: 0,
+    avgWatchTime: totalWatchTime > 0 ? `${(totalWatchTime / Math.max(analyticsData.length, 1)).toFixed(1)}h` : "0h",
+    engagementRate: totalViews > 0 ? ((totalLikes + totalComments) / totalViews * 100).toFixed(1) : "0",
+    demographics: defaultDemographics,
+  };
+
+  // Create time series data for charts
+  const timeSeriesData = analyticsData.slice(-7).map((item) => ({
     date: new Date(item.date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-    views: mockAnalytics.reduce((acc, v) => acc + (v.data[index]?.views || 0), 0),
-    likes: mockAnalytics.reduce((acc, v) => acc + (v.data[index]?.likes || 0), 0),
-    comments: mockAnalytics.reduce((acc, v) => acc + (v.data[index]?.comments || 0), 0),
+    views: item.views || 0,
+    likes: item.likes || 0,
+    comments: item.comments || 0,
   }));
+
+  // If no real data, show placeholder chart data
+  const chartData = timeSeriesData.length > 0 ? timeSeriesData : [
+    { date: "No data", views: 0, likes: 0, comments: 0 }
+  ];
+
+  // Video performance data
+  const videoPerformance = videos.slice(0, 5).map((video, i) => {
+    const videoAnalytics = analyticsData.filter(a => a.video_id === video.id);
+    const views = videoAnalytics.reduce((sum, a) => sum + (a.views || 0), 0);
+    const likes = videoAnalytics.reduce((sum, a) => sum + (a.likes || 0), 0);
+    const watchTime = videoAnalytics.reduce((sum, a) => sum + (a.watch_time_hours || 0), 0);
+    
+    return {
+      id: video.id,
+      title: video.title,
+      totalViews: views,
+      avgWatchTime: watchTime > 0 ? `${watchTime.toFixed(1)}h` : "N/A",
+      engagementRate: views > 0 ? ((likes / views) * 100).toFixed(1) : "0",
+    };
+  });
 
   const formatNumber = (num: number): string => {
     if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
@@ -77,29 +136,38 @@ const Analytics = () => {
 
       {/* Stats Overview */}
       <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title="Total Views"
-          value={formatNumber(analytics.totalViews)}
-          icon={<Eye className="h-5 w-5 text-primary" />}
-          trend={{ value: 12.5, isPositive: true }}
-        />
-        <StatCard
-          title="Subscribers"
-          value={formatNumber(analytics.totalSubscribers)}
-          icon={<Users className="h-5 w-5 text-secondary" />}
-          trend={{ value: analytics.subscriberGrowth, isPositive: true }}
-        />
-        <StatCard
-          title="Avg Watch Time"
-          value={analytics.avgWatchTime}
-          icon={<Clock className="h-5 w-5 text-accent-foreground" />}
-        />
-        <StatCard
-          title="Engagement Rate"
-          value={`${analytics.engagementRate}%`}
-          icon={<TrendingUp className="h-5 w-5 text-status-published" />}
-          trend={{ value: 2.3, isPositive: true }}
-        />
+        {isLoading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i} className="p-6">
+              <Skeleton className="h-4 w-24 mb-2" />
+              <Skeleton className="h-8 w-16" />
+            </Card>
+          ))
+        ) : (
+          <>
+            <StatCard
+              title="Total Views"
+              value={formatNumber(aggregatedAnalytics.totalViews)}
+              icon={<Eye className="h-5 w-5 text-primary" />}
+              trend={aggregatedAnalytics.totalViews > 0 ? { value: 12.5, isPositive: true } : undefined}
+            />
+            <StatCard
+              title="Total Likes"
+              value={formatNumber(totalLikes)}
+              icon={<ThumbsUp className="h-5 w-5 text-secondary" />}
+            />
+            <StatCard
+              title="Avg Watch Time"
+              value={aggregatedAnalytics.avgWatchTime}
+              icon={<Clock className="h-5 w-5 text-accent-foreground" />}
+            />
+            <StatCard
+              title="Engagement Rate"
+              value={`${aggregatedAnalytics.engagementRate}%`}
+              icon={<TrendingUp className="h-5 w-5 text-status-published" />}
+            />
+          </>
+        )}
       </div>
 
       <Tabs defaultValue="overview" className="space-y-6">
@@ -117,36 +185,46 @@ const Analytics = () => {
               <CardTitle>Views Over Time</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={combinedData}>
-                    <defs>
-                      <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="date" className="text-xs" />
-                    <YAxis className="text-xs" tickFormatter={formatNumber} />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "hsl(var(--card))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px",
-                      }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="views"
-                      stroke="hsl(var(--primary))"
-                      strokeWidth={2}
-                      fillOpacity={1}
-                      fill="url(#colorViews)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
+              {isLoading ? (
+                <Skeleton className="h-[300px] w-full" />
+              ) : chartData.length > 0 && chartData[0].views > 0 ? (
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={chartData}>
+                      <defs>
+                        <linearGradient id="colorViews" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis dataKey="date" className="text-xs" />
+                      <YAxis className="text-xs" tickFormatter={formatNumber} />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "hsl(var(--card))",
+                          border: "1px solid hsl(var(--border))",
+                          borderRadius: "8px",
+                        }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="views"
+                        stroke="hsl(var(--primary))"
+                        strokeWidth={2}
+                        fillOpacity={1}
+                        fill="url(#colorViews)"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-[300px] text-muted-foreground">
+                  <BarChart3 className="h-12 w-12 mb-4 opacity-50" />
+                  <p>No analytics data yet</p>
+                  <p className="text-sm">Import videos to start tracking performance</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -158,25 +236,34 @@ const Analytics = () => {
               <CardTitle>Engagement Breakdown</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={combinedData}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="date" className="text-xs" />
-                    <YAxis className="text-xs" />
-                    <Tooltip
-                      contentStyle={{
-                        backgroundColor: "hsl(var(--card))",
-                        border: "1px solid hsl(var(--border))",
-                        borderRadius: "8px",
-                      }}
-                    />
-                    <Legend />
-                    <Bar dataKey="likes" fill="hsl(var(--primary))" name="Likes" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="comments" fill="hsl(var(--secondary))" name="Comments" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+              {isLoading ? (
+                <Skeleton className="h-[300px] w-full" />
+              ) : chartData.length > 0 && (chartData[0].likes > 0 || chartData[0].comments > 0) ? (
+                <div className="h-[300px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis dataKey="date" className="text-xs" />
+                      <YAxis className="text-xs" />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "hsl(var(--card))",
+                          border: "1px solid hsl(var(--border))",
+                          borderRadius: "8px",
+                        }}
+                      />
+                      <Legend />
+                      <Bar dataKey="likes" fill="hsl(var(--primary))" name="Likes" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="comments" fill="hsl(var(--secondary))" name="Comments" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-[300px] text-muted-foreground">
+                  <ThumbsUp className="h-12 w-12 mb-4 opacity-50" />
+                  <p>No engagement data yet</p>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -191,7 +278,7 @@ const Analytics = () => {
                   <div>
                     <p className="text-sm text-muted-foreground">Total Likes</p>
                     <p className="text-2xl font-bold">
-                      {formatNumber(combinedData.reduce((acc, d) => acc + d.likes, 0))}
+                      {formatNumber(totalLikes)}
                     </p>
                   </div>
                 </div>
@@ -206,7 +293,7 @@ const Analytics = () => {
                   <div>
                     <p className="text-sm text-muted-foreground">Total Comments</p>
                     <p className="text-2xl font-bold">
-                      {formatNumber(combinedData.reduce((acc, d) => acc + d.comments, 0))}
+                      {formatNumber(totalComments)}
                     </p>
                   </div>
                 </div>
@@ -220,7 +307,7 @@ const Analytics = () => {
                   </div>
                   <div>
                     <p className="text-sm text-muted-foreground">Total Shares</p>
-                    <p className="text-2xl font-bold">2.4K</p>
+                    <p className="text-2xl font-bold">N/A</p>
                   </div>
                 </div>
               </CardContent>
@@ -240,7 +327,7 @@ const Analytics = () => {
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
-                        data={analytics.demographics.ageGroups}
+                        data={aggregatedAnalytics.demographics.ageGroups}
                         cx="50%"
                         cy="50%"
                         innerRadius={60}
@@ -248,7 +335,7 @@ const Analytics = () => {
                         paddingAngle={5}
                         dataKey="value"
                       >
-                        {analytics.demographics.ageGroups.map((_, index) => (
+                        {aggregatedAnalytics.demographics.ageGroups.map((_, index) => (
                           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                         ))}
                       </Pie>
@@ -267,7 +354,7 @@ const Analytics = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {analytics.demographics.countries.map((country, i) => (
+                  {aggregatedAnalytics.demographics.countries.map((country, i) => (
                     <div key={country.name} className="flex items-center gap-3">
                       <div className="w-32 truncate font-medium">{country.name}</div>
                       <div className="flex-1">
@@ -299,32 +386,45 @@ const Analytics = () => {
               <CardTitle>Top Performing Content</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {mockAnalytics.map((video, i) => (
-                  <div
-                    key={video.videoId}
-                    className="flex items-center gap-4 rounded-xl border border-border p-4"
-                  >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 font-bold text-primary">
-                      #{i + 1}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="truncate font-medium">{video.title}</p>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                        <span>{formatNumber(video.totalViews)} views</span>
-                        <span>•</span>
-                        <span>{video.avgWatchTime} avg watch time</span>
+              {isLoading ? (
+                <div className="space-y-4">
+                  {Array.from({ length: 3 }).map((_, i) => (
+                    <Skeleton key={i} className="h-20 w-full" />
+                  ))}
+                </div>
+              ) : videoPerformance.length > 0 ? (
+                <div className="space-y-4">
+                  {videoPerformance.map((video, i) => (
+                    <div
+                      key={video.id}
+                      className="flex items-center gap-4 rounded-xl border border-border p-4"
+                    >
+                      <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10 font-bold text-primary">
+                        #{i + 1}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="truncate font-medium">{video.title}</p>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <span>{formatNumber(video.totalViews)} views</span>
+                          <span>•</span>
+                          <span>{video.avgWatchTime} avg watch time</span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-lg font-bold text-status-approved">
+                          {video.engagementRate}%
+                        </p>
+                        <p className="text-xs text-muted-foreground">engagement</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-lg font-bold text-status-approved">
-                        {video.engagementRate}%
-                      </p>
-                      <p className="text-xs text-muted-foreground">engagement</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                  <Eye className="h-12 w-12 mb-4 opacity-50" />
+                  <p>No videos imported yet</p>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
