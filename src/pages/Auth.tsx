@@ -1,15 +1,25 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Loader2, Youtube, Sparkles, Mail } from 'lucide-react';
 import { toast } from 'sonner';
-import { Youtube, Loader2, Sparkles } from 'lucide-react';
 
 export default function Auth() {
   const navigate = useNavigate();
-  const { isAuthenticated, signInWithYouTube, isLoading } = useAuth();
+  const { isAuthenticated, signInWithYouTube, signIn, signUp, isLoading } = useAuth();
   const [isConnecting, setIsConnecting] = useState(false);
+  
+  // Email/password state
+  const [authMode, setAuthMode] = useState<'login' | 'signup'>('login');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (isAuthenticated && !isLoading) {
@@ -25,7 +35,38 @@ export default function Auth() {
       toast.error('Failed to connect with YouTube. Please try again.');
       setIsConnecting(false);
     }
-    // Don't set isConnecting to false on success - we're redirecting to Google
+  };
+
+  const handleEmailAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!email || !password) {
+      toast.error('Please fill in all fields');
+      return;
+    }
+    
+    if (password.length < 6) {
+      toast.error('Password must be at least 6 characters');
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      if (authMode === 'login') {
+        const { error } = await signIn(email, password);
+        if (error) throw error;
+        toast.success('Logged in successfully!');
+      } else {
+        const { error } = await signUp(email, password, displayName);
+        if (error) throw error;
+        toast.success('Account created! You are now signed in.');
+      }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Authentication failed');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   if (isLoading) {
@@ -85,7 +126,7 @@ export default function Auth() {
             </div>
           </div>
 
-          {/* Connect button */}
+          {/* YouTube Connect button */}
           <Button
             size="lg"
             className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
@@ -105,11 +146,87 @@ export default function Auth() {
             )}
           </Button>
 
+          {/* Divider */}
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-border" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">Or continue with email</span>
+            </div>
+          </div>
+
+          {/* Email/Password Form */}
+          <Tabs value={authMode} onValueChange={(v) => setAuthMode(v as 'login' | 'signup')} className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="login">Sign In</TabsTrigger>
+              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            </TabsList>
+            
+            <form onSubmit={handleEmailAuth} className="space-y-4 mt-4">
+              {authMode === 'signup' && (
+                <div className="space-y-2">
+                  <Label htmlFor="displayName">Display Name</Label>
+                  <Input
+                    id="displayName"
+                    type="text"
+                    placeholder="Your name"
+                    value={displayName}
+                    onChange={(e) => setDisplayName(e.target.value)}
+                  />
+                </div>
+              )}
+              
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Min 6 characters"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+              
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={isSubmitting}
+                variant="secondary"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    {authMode === 'login' ? 'Signing in...' : 'Creating account...'}
+                  </>
+                ) : (
+                  <>
+                    <Mail className="mr-2 h-4 w-4" />
+                    {authMode === 'login' ? 'Sign In' : 'Create Account'}
+                  </>
+                )}
+              </Button>
+            </form>
+          </Tabs>
+
           {/* Privacy note */}
           <p className="text-center text-xs text-muted-foreground">
             We only request read-only access to your channel data.
             <br />
-            Your videos and analytics are never shared.
+            Your information is secure and never shared.
           </p>
         </CardContent>
       </Card>
